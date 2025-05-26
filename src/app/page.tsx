@@ -20,8 +20,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Ride } from '@/lib/mockData'; // Import Ride type
-import { mockRides } from '@/lib/mockData'; // Import mockRides data
+import type { Ride } from '@/lib/mockData'; 
+import { mockRides } from '@/lib/mockData'; 
 
 const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; label: string; onClick?: () => void; href?: string }) => {
   const buttonContent = (
@@ -191,7 +191,7 @@ export default function DashboardPage() {
             <h2 id="share-ride-header" className="text-lg font-semibold text-muted-foreground mb-4">Offer Your Ride</h2>
             <div className="space-y-3">
               <ServiceButton icon={<Share2 />} label="Share Your Ride" href="/share-ride" />
-              <ServiceButton icon={<Bus />} label="Share a Bus Route & Time" />
+              <ServiceButton icon={<Bus />} label="Share a Bus Route & Time" href="/share-bus-route"/>
             </div>
           </section>
 
@@ -207,7 +207,7 @@ export default function DashboardPage() {
           <section aria-labelledby="bus-info-header">
             <h2 id="bus-info-header" className="text-lg font-semibold text-muted-foreground mb-4">Bus Information</h2>
             <div className="space-y-3">
-              <ServiceButton icon={<ListChecks />} label="Bus Schedules & Routes" />
+              <ServiceButton icon={<ListChecks />} label="Bus Schedules & Routes" href="/bus-schedules" />
             </div>
           </section>
         </main>
