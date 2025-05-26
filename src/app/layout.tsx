@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'TransitGo',
+  title: 'HOPE',
   description: 'Modern transportation app for ride-sharing and booking.',
 };
 
