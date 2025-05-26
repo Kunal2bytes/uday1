@@ -22,7 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Ride } from '@/lib/mockData'; 
-import { mockRides } from '@/lib/mockData'; 
+// import { mockRides } from '@/lib/mockData'; // Removed as mockRides is no longer exported
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 
@@ -72,14 +72,13 @@ export default function DashboardPage() {
       return;
     }
 
-    setFilteredRides(
-      mockRides.filter(ride => {
-        const matchesOrigin = lowerOrigin ? ride.origin.toLowerCase().includes(lowerOrigin) : true;
-        const matchesDestination = lowerDestination ? ride.destination.toLowerCase().includes(lowerDestination) : true;
-        return matchesOrigin && matchesDestination;
-      })
-    );
-  }, [originSearch, destinationSearch, mockRides]); 
+    // TODO: Replace this with Firestore fetching logic
+    // For now, setFilteredRides to empty as mockRides is no longer available.
+    // This will fix the build error but temporarily disables search functionality
+    // until Firestore read is implemented for the dashboard.
+    setFilteredRides([]); 
+
+  }, [originSearch, destinationSearch]); 
 
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
@@ -215,7 +214,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-6">No shared rides found matching your criteria. Try adjusting your search.</p>
+                <p className="text-center text-muted-foreground py-6">No shared rides found matching your criteria. Try adjusting your search or check back later as rides are shared from Firestore.</p>
               )}
             </section>
           )}
@@ -248,3 +247,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
