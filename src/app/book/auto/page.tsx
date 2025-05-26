@@ -36,7 +36,7 @@ export default function BookAutoPage() {
       description: `Your request for an auto ride with ${ride.name} has been notionally sent.`,
       variant: "default",
     });
-    console.log(`Booking auto ride with ${ride.name} (ID: ${ride.id})`);
+    console.log(`Booking auto ride with ${ride.name} (ID: ${ride.id}) - Check browser console for this message.`);
   };
 
   return (

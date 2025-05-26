@@ -88,8 +88,7 @@ export default function DashboardPage() {
       description: `Your request for a ride with ${ride.name} has been notionally sent.`,
       variant: "default",
     });
-    console.log(`Booking ride with ${ride.name} (ID: ${ride.id})`);
-    // In a real app, this would trigger backend logic
+    console.log(`Booking ride with ${ride.name} (ID: ${ride.id}) - Check browser console for this message.`);
   };
 
   return (
