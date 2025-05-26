@@ -127,7 +127,6 @@ export default function BusSchedulesPage() {
                     {districts.map(district => (
                       <SelectItem key={district} value={district}>{district}</SelectItem>
                     ))}
-                     {selectedState && districts.length === 0 && <SelectItem value="" disabled>No districts found</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
