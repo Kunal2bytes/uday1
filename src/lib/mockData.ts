@@ -39,8 +39,8 @@ export interface BusRoute {
   district: string;
   city: string;
   routeNameOrNumber: string;
+  busNumber?: string; // Optional bus number
   stops: BusStop[];
-  // Potentially add conductorName, busNumber etc. if needed later
 }
 
 // This array will store shared bus routes.
@@ -52,6 +52,7 @@ export let mockBusRoutes: BusRoute[] = [
     district: "Los Angeles County",
     city: "Los Angeles",
     routeNameOrNumber: "Route 66 Express",
+    busNumber: "B-101",
     stops: [
       { stopName: "Downtown LA", scheduledTime: "08:00" },
       { stopName: "Hollywood", scheduledTime: "08:30" },
@@ -64,6 +65,7 @@ export let mockBusRoutes: BusRoute[] = [
     district: "New York County",
     city: "New York City",
     routeNameOrNumber: "Crosstown M57",
+    busNumber: "B-202",
     stops: [
       { stopName: "72nd St & Broadway", scheduledTime: "10:00" },
       { stopName: "5th Ave & 57th St", scheduledTime: "10:20" },
