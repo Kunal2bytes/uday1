@@ -19,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
+import { mockRides, type Ride } from "@/lib/mockData"; // Import mockRides and Ride type
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -69,6 +70,8 @@ export function ShareRideForm() {
       destination: "",
       timeToGo: "",
       seatingCapacity: 1,
+      // vehicle: undefined, // Let user select
+      // gender: undefined, // Let user select
     },
   });
 
@@ -76,12 +79,39 @@ export function ShareRideForm() {
 
   function onSubmit(data: ShareRideFormValues) {
     console.log("Share ride data:", data);
+
+    const newRide: Ride = {
+      id: `ride-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, // Simple unique ID
+      name: data.fullName,
+      origin: data.origin,
+      destination: data.destination,
+      timeToGo: data.timeToGo,
+      vehicle: data.vehicle,
+      gender: data.gender,
+      seatingCapacity: data.seatingCapacity,
+      contactNumber: data.contactNumber,
+      // distanceKm is not collected in this form, so it will be undefined for new rides
+    };
+
+    mockRides.push(newRide);
+    console.log("Updated mockRides:", mockRides);
+
+
     toast({
       title: "Ride Shared Successfully!",
-      description: "Your ride details have been submitted.",
+      description: "Your ride details have been submitted and are now visible.",
       variant: "default",
     });
-    form.reset(); // Reset form after successful submission
+    form.reset({ // Reset form to default values or specific empty states
+      fullName: "",
+      contactNumber: "",
+      origin: "",
+      destination: "",
+      timeToGo: "",
+      vehicle: undefined, 
+      seatingCapacity: 1, 
+      gender: undefined,
+    });
   }
 
   return (
@@ -171,6 +201,7 @@ export function ShareRideForm() {
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
+                      value={field.value} // Ensure value is controlled
                       className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0"
                     >
                       <FormItem className="flex items-center space-x-3 space-y-0">
@@ -204,7 +235,9 @@ export function ShareRideForm() {
                 <FormItem>
                   <FormLabel>Seating Capacity (including driver)</FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" placeholder="e.g. 2" {...field} />
+                    <Input type="number" min="1" placeholder="e.g. 2" {...field} 
+                      onChange={event => field.onChange(+event.target.value)} // Ensure value is number
+                    />
                   </FormControl>
                   {selectedVehicle === "bike" && <FormDescription>Max 2 for bike.</FormDescription>}
                   {selectedVehicle === "car" && <FormDescription>Max 7 for car.</FormDescription>}
@@ -223,6 +256,7 @@ export function ShareRideForm() {
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
+                      value={field.value} // Ensure value is controlled
                       className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0"
                     >
                       <FormItem className="flex items-center space-x-3 space-y-0">
