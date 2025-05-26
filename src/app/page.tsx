@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, Search, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route } from "lucide-react";
+import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -127,23 +127,14 @@ export default function DashboardPage() {
               </SheetContent>
             </Sheet>
             
-            <h1 className="text-xl font-bold mx-auto hidden sm:block text-foreground">TransitGo</h1>
+            <h1 className="text-xl font-bold mx-auto text-foreground">TransitGo</h1>
 
-            <div className="flex-1 sm:flex-none flex items-center justify-end sm:justify-start ml-2 sm:ml-0">
-              <div className="relative w-full max-w-xs">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Global Search..."
-                  className="w-full bg-input border-border placeholder:text-muted-foreground rounded-full h-10 text-sm pl-9 pr-3 text-foreground"
-                />
-              </div>
-              <Button variant="ghost" size="icon" aria-label="Map" className="ml-1 shrink-0">
+            <div className="flex items-center justify-end ml-2 sm:ml-0">
+              <Button variant="ghost" size="icon" aria-label="Map" className="shrink-0">
                 <MapPin className="h-5 w-5 text-foreground" />
               </Button>
             </div>
           </div>
-          <h1 className="sm:hidden text-xl font-bold text-center pb-2 text-foreground">TransitGo</h1>
         </header>
 
         <main className="p-4 sm:p-6 space-y-10 mt-2">
@@ -247,4 +238,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
