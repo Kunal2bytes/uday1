@@ -6,7 +6,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, Bike as BikeIcon } from "lucide-react";
+import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, Bike as BikeIcon, Phone } from "lucide-react";
 import type { Ride } from '@/lib/mockData';
 import { mockRides } from '@/lib/mockData';
 
@@ -71,6 +71,12 @@ export default function BookBikePage() {
                     <span className="font-medium">Passenger Seats:</span>&nbsp;
                     {passengerSeats(ride.seatingCapacity)}
                   </div>
+                  {ride.contactNumber && (
+                    <div className="flex items-center">
+                      <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Contact:</span>&nbsp;{ride.contactNumber}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
