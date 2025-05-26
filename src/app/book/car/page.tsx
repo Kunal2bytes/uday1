@@ -85,7 +85,10 @@ export default function BookCarPage() {
                   {ride.contactNumber && (
                     <div className="flex items-center">
                       <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Contact:</span>&nbsp;{ride.contactNumber}
+                      <span className="font-medium">Contact:</span>&nbsp;
+                      <a href={`tel:${ride.contactNumber}`} className="text-primary hover:underline">
+                        {ride.contactNumber}
+                      </a>
                     </div>
                   )}
                 </CardContent>
