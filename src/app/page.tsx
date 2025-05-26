@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding } from "lucide-react";
+import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -75,7 +75,7 @@ export default function DashboardPage() {
         return matchesOrigin && matchesDestination;
       })
     );
-  }, [originSearch, destinationSearch]);
+  }, [originSearch, destinationSearch, mockRides]); // Added mockRides to dependency array to re-filter when new rides are added
 
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
@@ -179,6 +179,12 @@ export default function DashboardPage() {
                           <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">To:</span>&nbsp;{ride.destination}
                         </div>
+                        {ride.contactNumber && (
+                          <div className="flex items-center">
+                            <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">Contact:</span>&nbsp;{ride.contactNumber}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
