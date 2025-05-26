@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { ChevronLeft, MapPin, Clock, ListChecks, BusFront } from "lucide-react";
 import type { BusRoute } from '@/lib/mockData';
 import { mockBusRoutes } from '@/lib/mockData';
+import { formatTimeTo12Hour } from "@/lib/utils";
 
 export default function BusSchedulesPage() {
   // Use state to ensure mockBusRoutes is fresh on client, especially if it's mutated elsewhere
@@ -62,7 +63,7 @@ export default function BusSchedulesPage() {
                           </div>
                           <div className="flex items-center text-muted-foreground">
                             <Clock className="mr-1 h-4 w-4 text-muted-foreground/70 flex-shrink-0" />
-                            <span>{stop.scheduledTime}</span>
+                            <span>{formatTimeTo12Hour(stop.scheduledTime)}</span>
                           </div>
                         </li>
                       ))}
