@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, CarTaxiFront as AutoIcon, Phone } from "lucide-react";
 import type { Ride } from '@/lib/mockData';
-import { mockRides } from '@/lib/mockData';
+// import { mockRides } from '@/lib/mockData'; // Removed as mockRides is no longer exported
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 
@@ -17,13 +17,14 @@ const pageTitle = "Available Autos";
 const vehicleType: Ride["vehicle"] = "auto";
 
 export default function BookAutoPage() {
-  const filteredRides = mockRides.filter(ride => {
-    if (ride.vehicle !== vehicleType) return false;
-    if (ride.distanceKm === undefined || ride.distanceKm > 1) { // Auto-specific filter
-      return false;
-    }
-    return true;
-  });
+  // const filteredRides = mockRides.filter(ride => { // Temporarily disabled
+  //   if (ride.vehicle !== vehicleType) return false;
+  //   if (ride.distanceKm === undefined || ride.distanceKm > 1) { // Auto-specific filter
+  //     return false;
+  //   }
+  //   return true;
+  // });
+  const filteredRides: Ride[] = []; // Rides will be fetched from Firestore later
   const { toast } = useToast();
 
   const passengerSeats = (capacity: number) => {
@@ -55,7 +56,7 @@ export default function BookAutoPage() {
             <h1 className="text-3xl font-bold text-center sm:text-left text-primary">{pageTitle}</h1>
           </div>
           <p className="text-muted-foreground text-center sm:text-left">
-            Browse available {vehicleType}s shared by other users (within 1km).
+            Browse available {vehicleType}s shared by other users (Data will be fetched from Firestore).
           </p>
         </header>
 
@@ -114,7 +115,7 @@ export default function BookAutoPage() {
           </div>
         ) : (
           <p className="text-center text-muted-foreground py-6">
-            No {vehicleType} rides found within 1km.
+            No {vehicleType} rides found. Rides will be fetched from Firestore.
           </p>
         )}
       </div>
