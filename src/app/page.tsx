@@ -1,7 +1,15 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Menu, Search, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks } from "lucide-react";
 import React from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const ServiceButton = ({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) => {
   return (
@@ -25,9 +33,29 @@ export default function DashboardPage() {
         
         <header className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-sm border-b border-border/40">
           <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
-            <Button variant="ghost" size="icon" aria-label="Open menu" className="shrink-0">
-              <Menu className="h-6 w-6 text-foreground" />
-            </Button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Open menu" className="shrink-0">
+                  <Menu className="h-6 w-6 text-foreground" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-card text-card-foreground p-6">
+                <SheetHeader className="mb-6">
+                  <SheetTitle className="text-2xl font-semibold text-foreground">Menu</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col space-y-3">
+                  <Button variant="ghost" className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md">
+                    Terms and Conditions
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md">
+                    About Us
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md">
+                    Your Rides
+                  </Button>
+                </nav>
+              </SheetContent>
+            </Sheet>
             
             <h1 className="text-xl font-bold mx-auto hidden sm:block text-foreground">Dashboard</h1>
 
