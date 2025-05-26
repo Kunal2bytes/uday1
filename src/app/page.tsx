@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Menu, Search, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks } from "lucide-react";
 import React from 'react';
+import Link from 'next/link';
 import {
   Sheet,
   SheetContent,
@@ -11,17 +12,33 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-const ServiceButton = ({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) => {
+const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; label: string; onClick?: () => void; href?: string }) => {
+  const buttonContent = (
+    <div className="flex items-center space-x-3">
+      {React.cloneElement(icon as React.ReactElement, { className: "h-6 w-6 text-primary" })}
+      <span>{label}</span>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} passHref legacyBehavior>
+        <Button
+          asChild
+          className="w-full justify-start text-left py-4 px-5 bg-white hover:bg-slate-100 shadow-md rounded-full text-slate-800 font-medium text-base focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all duration-150 ease-in-out active:scale-[0.98]"
+        >
+          <a>{buttonContent}</a>
+        </Button>
+      </Link>
+    );
+  }
+
   return (
     <Button
       onClick={onClick}
-      // Pill-shaped, white background, soft shadow, primary color for icon, dark text for label
       className="w-full justify-start text-left py-4 px-5 bg-white hover:bg-slate-100 shadow-md rounded-full text-slate-800 font-medium text-base focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all duration-150 ease-in-out active:scale-[0.98]"
     >
-      <div className="flex items-center space-x-3">
-        {React.cloneElement(icon as React.ReactElement, { className: "h-6 w-6 text-primary" })}
-        <span>{label}</span>
-      </div>
+      {buttonContent}
     </Button>
   );
 };
@@ -81,7 +98,7 @@ export default function DashboardPage() {
           <section aria-labelledby="share-ride-header">
             <h2 id="share-ride-header" className="text-lg font-semibold text-muted-foreground mb-4">Share a Ride</h2>
             <div className="space-y-3">
-              <ServiceButton icon={<Share2 />} label="Share Your Ride" />
+              <ServiceButton icon={<Share2 />} label="Share Your Ride" href="/share-ride" />
               <ServiceButton icon={<Bus />} label="Share a Bus Route & Time" />
             </div>
           </section>
