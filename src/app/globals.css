@@ -32,49 +32,61 @@ body {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --radius: 0.5rem; /* Default from ShadCN, user wants soft-rounded, this could be 0.75rem */
+
+    /* Default to dark theme values */
+    --background: 233 62% 29%; /* Dark navy blue #1A237E */
+    --foreground: 0 0% 98%;   /* White text */
+
+    --card: 233 60% 35%; /* Slightly lighter than background #24308F */
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+
+    --popover: 233 62% 20%; /* Darker for popovers #11184D */
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+
+    --primary: 231 48% 54%; /* Deep blue #3F51B5 */
+    --primary-foreground: 0 0% 98%; /* White text on primary bg */
+
+    --secondary: 233 39% 60%; /* A less prominent blue #5664B3 */
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+
+    --muted: 233 30% 45%; /* Muted elements #3B4B8C */
+    --muted-foreground: 233 25% 75%; /* Grey for section headers #A0A8D5 */
+
+    --accent: 233 39% 68%; /* Muted indigo #5C6BC0 - for highlights, hover */
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+
+    --destructive: 0 72% 51%; /* Brighter Red for dark theme */
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --border: 233 50% 40%; /* Border color #2C3A80 */
+    --input: 233 50% 35%;  /* Input background #222D6E */
+    --ring: 231 48% 60%;   /* Ring color - lighter primary #586DD8 */
+    --radius: 0.75rem; /* Softer rounded corners */
+  }
+
+  .dark {
+    /* These values are now in :root, but kept for compatibility if .dark class is explicitly used */
+    --background: 233 62% 29%;
+    --foreground: 0 0% 98%;
+    --card: 233 60% 35%;
+    --card-foreground: 0 0% 98%;
+    --popover: 233 62% 20%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 231 48% 54%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 233 39% 60%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 233 30% 45%;
+    --muted-foreground: 233 25% 75%;
+    --accent: 233 39% 68%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 233 50% 40%;
+    --input: 233 50% 35%;
+    --ring: 231 48% 60%;
+    --radius: 0.75rem;
   }
 }
 
