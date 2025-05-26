@@ -9,94 +9,91 @@ body {
 
 @layer base {
   :root {
-    /* Olive Green & Grey Dark Theme values */
-    --background: 88 20% 15%; /* Dark, desaturated olive */
-    --foreground: 45 30% 95%;   /* Very light beige/off-white text */
+    /* Deep Indigo & Vibrant Teal Dark Theme */
+    --background: 225 25% 12%; /* Very dark, desaturated indigo/charcoal */
+    --foreground: 180 30% 95%; /* Light, pale teal/cyan for text */
 
-    --card: 220 10% 20%; /* Dark cool grey for cards */
-    --card-foreground: 45 30% 95%; /* Light text on cards */
+    --card: 225 20% 18%; /* Slightly lighter dark indigo/charcoal */
+    --card-foreground: 180 30% 95%;
 
-    --popover: 220 10% 12%; /* Darker cool grey for popovers */
-    --popover-foreground: 45 30% 95%;
+    --popover: 225 20% 10%; /* Darker indigo for popovers */
+    --popover-foreground: 180 30% 95%;
 
-    --primary: 88 45% 45%; /* Main olive green for interactive elements */
-    --primary-foreground: 45 40% 96%; /* Light text on primary bg */
+    --primary: 180 65% 50%; /* Vibrant teal/cyan */
+    --primary-foreground: 225 30% 96%; /* Light text on primary */
 
-    --secondary: 220 10% 35%; /* Mid-tone cool grey */
-    --secondary-foreground: 45 30% 95%;
+    --secondary: 210 25% 40%; /* Muted cool blue/grey */
+    --secondary-foreground: 180 30% 95%;
 
-    --muted: 220 10% 25%; /* Darker cool grey for muted elements */
-    --muted-foreground: 220 15% 70%; /* Lighter grey for muted text */
+    --muted: 220 15% 30%; /* Darker, desaturated blue/grey */
+    --muted-foreground: 220 15% 75%; /* Lighter grey for muted text */
 
-    --accent: 88 40% 55%; /* Brighter olive for highlights, hover */
-    --accent-foreground: 45 40% 96%;
+    --accent: 175 70% 55%; /* Slightly brighter/different teal for highlights */
+    --accent-foreground: 225 30% 96%;
 
-    --destructive: 0 72% 51%; /* Standard bright red for destructive actions */
-    --destructive-foreground: 0 0% 98%; /* White text on destructive */
+    --destructive: 0 72% 51%; /* Standard bright red */
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 220 10% 30%; /* Cool grey border */
-    --input: 220 10% 22%;  /* Input background, cool grey */
-    --ring: 88 45% 50%;   /* Focus ring color, related to primary olive */
+    --border: 220 15% 25%; /* Dark blue/grey border */
+    --input: 220 15% 20%;  /* Input background, dark blue/grey */
+    --ring: 180 65% 55%;   /* Focus ring color, related to primary teal */
     
-    --radius: 0.75rem; /* Softer rounded corners */
+    --radius: 0.75rem;
 
-    /* Chart colors (retained from olive theme, should still work) */
-    --chart-1: 80 40% 50%;  /* Primary olive */
-    --chart-2: 45 30% 60%;  /* Light brownish-beige */
-    --chart-3: 70 35% 40%;  /* Darker, muted green */
-    --chart-4: 90 25% 70%;  /* Very light, pale green */
-    --chart-5: 30 20% 55%;  /* Desaturated light brown */
+    /* Chart colors - Teal, Indigo, and complementary */
+    --chart-1: 180 60% 45%;  /* Primary Teal */
+    --chart-2: 210 50% 55%;  /* Medium Indigo/Blue */
+    --chart-3: 170 50% 40%;  /* Darker Muted Teal */
+    --chart-4: 35 80% 60%;   /* Soft Orange/Amber (complementary) */
+    --chart-5: 225 30% 65%;  /* Light Indigo/Blue */
 
-    /* Sidebar specific colors (retained from olive theme, can be adjusted if needed) */
-    --sidebar-background: 88 25% 18%;      /* Slightly darker/distinct olive for sidebar bg */
-    --sidebar-foreground: 45 30% 90%;      /* Consistent light text */
-    --sidebar-primary: 88 45% 48%;         /* Sidebar primary, can be same as main primary */
-    --sidebar-primary-foreground: 45 40% 96%;
-    --sidebar-accent: 88 40% 58%;          /* Sidebar accent, can be same as main accent */
-    --sidebar-accent-foreground: 45 40% 96%;
-    --sidebar-border: 88 20% 28%;          /* Sidebar border */
-    --sidebar-ring: 88 45% 52%;            /* Sidebar ring */
+    /* Sidebar specific colors */
+    --sidebar-background: 225 22% 15%;      /* Slightly distinct dark indigo for sidebar */
+    --sidebar-foreground: 180 25% 92%;      /* Consistent light text */
+    --sidebar-primary: 180 60% 52%;         /* Sidebar primary, can be same as main primary */
+    --sidebar-primary-foreground: 225 30% 96%;
+    --sidebar-accent: 175 65% 58%;          /* Sidebar accent */
+    --sidebar-accent-foreground: 225 30% 96%;
+    --sidebar-border: 225 20% 25%;          /* Sidebar border */
+    --sidebar-ring: 180 60% 58%;            /* Sidebar ring */
   }
 
   .dark {
-    /* Ensure .dark class applies the same variables */
-    --background: 88 20% 15%;
-    --foreground: 45 30% 95%;
-    --card: 220 10% 20%; 
-    --card-foreground: 45 30% 95%;
-    --popover: 220 10% 12%; 
-    --popover-foreground: 45 30% 95%;
-    --primary: 88 45% 45%;
-    --primary-foreground: 45 40% 96%;
-    --secondary: 220 10% 35%; 
-    --secondary-foreground: 45 30% 95%;
-    --muted: 220 10% 25%; 
-    --muted-foreground: 220 15% 70%; 
-    --accent: 88 40% 55%;
-    --accent-foreground: 45 40% 96%;
+    --background: 225 25% 12%;
+    --foreground: 180 30% 95%;
+    --card: 225 20% 18%; 
+    --card-foreground: 180 30% 95%;
+    --popover: 225 20% 10%; 
+    --popover-foreground: 180 30% 95%;
+    --primary: 180 65% 50%;
+    --primary-foreground: 225 30% 96%;
+    --secondary: 210 25% 40%; 
+    --secondary-foreground: 180 30% 95%;
+    --muted: 220 15% 30%; 
+    --muted-foreground: 220 15% 75%; 
+    --accent: 175 70% 55%;
+    --accent-foreground: 225 30% 96%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 10% 30%; 
-    --input: 220 10% 22%;  
-    --ring: 88 45% 50%;   
+    --border: 220 15% 25%; 
+    --input: 220 15% 20%;  
+    --ring: 180 65% 55%;   
     --radius: 0.75rem;
 
-    /* Chart colors for olive theme */
-    --chart-1: 80 40% 50%;
-    --chart-2: 45 30% 60%;
-    --chart-3: 70 35% 40%;
-    --chart-4: 90 25% 70%;
-    --chart-5: 30 20% 55%;
+    --chart-1: 180 60% 45%;
+    --chart-2: 210 50% 55%;
+    --chart-3: 170 50% 40%;
+    --chart-4: 35 80% 60%;
+    --chart-5: 225 30% 65%;
 
-    /* Sidebar specific colors (olive theme) */
-    --sidebar-background: 88 25% 18%;
-    --sidebar-foreground: 45 30% 90%;
-    --sidebar-primary: 88 45% 48%;
-    --sidebar-primary-foreground: 45 40% 96%;
-    --sidebar-accent: 88 40% 58%;
-    --sidebar-accent-foreground: 45 40% 96%;
-    --sidebar-border: 88 20% 28%;
-    --sidebar-ring: 88 45% 52%;
+    --sidebar-background: 225 22% 15%;
+    --sidebar-foreground: 180 25% 92%;
+    --sidebar-primary: 180 60% 52%;
+    --sidebar-primary-foreground: 225 30% 96%;
+    --sidebar-accent: 175 65% 58%;
+    --sidebar-accent-foreground: 225 30% 96%;
+    --sidebar-border: 225 20% 25%;
+    --sidebar-ring: 180 60% 58%;
   }
 }
 
