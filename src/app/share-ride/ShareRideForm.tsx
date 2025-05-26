@@ -19,7 +19,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
-import { mockRides, type Ride } from "@/lib/mockData"; // Import mockRides and Ride type
+// import { mockRides, type Ride } from "@/lib/mockData"; // Firebase will replace mockRides
+import type { Ride } from "@/lib/mockData"; // Keep Ride type for now
+import { db } from "@/lib/firebase"; // Import Firebase db instance
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -61,6 +64,7 @@ export type ShareRideFormValues = z.infer<typeof formSchema>;
 
 export function ShareRideForm() {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const form = useForm<ShareRideFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -77,11 +81,11 @@ export function ShareRideForm() {
 
   const selectedVehicle = form.watch("vehicle");
 
-  function onSubmit(data: ShareRideFormValues) {
-    console.log("Share ride data:", data);
+  async function onSubmit(data: ShareRideFormValues) {
+    setIsSubmitting(true);
+    console.log("Share ride data for Firestore:", data);
 
-    const newRide: Ride = {
-      id: `ride-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, // Simple unique ID
+    const newRidePayload = {
       name: data.fullName,
       origin: data.origin,
       destination: data.destination,
@@ -90,28 +94,42 @@ export function ShareRideForm() {
       gender: data.gender,
       seatingCapacity: data.seatingCapacity,
       contactNumber: data.contactNumber,
-      // distanceKm is not collected in this form, so it will be undefined for new rides
+      // distanceKm is not collected here, can be added if needed
+      createdAt: serverTimestamp(), // Add a timestamp
     };
 
-    mockRides.push(newRide);
-    console.log("Updated mockRides:", mockRides);
+    try {
+      const docRef = await addDoc(collection(db, "rides"), newRidePayload);
+      console.log("Ride added to Firestore with ID: ", docRef.id);
+      
+      // mockRides.push(newRide); // Remove: No longer pushing to mockRides
+      // console.log("Updated mockRides:", mockRides);
 
-
-    toast({
-      title: "Ride Shared Successfully!",
-      description: "Your ride details have been submitted and are now visible.",
-      variant: "default",
-    });
-    form.reset({ // Reset form to default values or specific empty states
-      fullName: "",
-      contactNumber: "",
-      origin: "",
-      destination: "",
-      timeToGo: "",
-      vehicle: undefined, 
-      seatingCapacity: 1, 
-      gender: undefined,
-    });
+      toast({
+        title: "Ride Shared Successfully!",
+        description: "Your ride details have been submitted and saved to the database.",
+        variant: "default",
+      });
+      form.reset({ 
+        fullName: "",
+        contactNumber: "",
+        origin: "",
+        destination: "",
+        timeToGo: "",
+        vehicle: undefined, 
+        seatingCapacity: 1, 
+        gender: undefined,
+      });
+    } catch (error) {
+      console.error("Error adding ride to Firestore: ", error);
+      toast({
+        title: "Error Sharing Ride",
+        description: "There was a problem saving your ride. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -130,7 +148,7 @@ export function ShareRideForm() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. John Doe" {...field} />
+                    <Input placeholder="e.g. John Doe" {...field} disabled={isSubmitting}/>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -143,7 +161,7 @@ export function ShareRideForm() {
                 <FormItem>
                   <FormLabel>Contact Number</FormLabel>
                   <FormControl>
-                    <Input type="tel" placeholder="e.g. 9876543210" {...field} />
+                    <Input type="tel" placeholder="e.g. 9876543210" {...field} disabled={isSubmitting}/>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -157,7 +175,7 @@ export function ShareRideForm() {
                   <FormItem>
                     <FormLabel>Origin</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Central Park" {...field} />
+                      <Input placeholder="e.g. Central Park" {...field} disabled={isSubmitting}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -170,7 +188,7 @@ export function ShareRideForm() {
                   <FormItem>
                     <FormLabel>Destination</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Times Square" {...field} />
+                      <Input placeholder="e.g. Times Square" {...field} disabled={isSubmitting}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -184,7 +202,7 @@ export function ShareRideForm() {
                 <FormItem>
                   <FormLabel>Time to Go</FormLabel>
                   <FormControl>
-                    <Input type="time" {...field} />
+                    <Input type="time" {...field} disabled={isSubmitting}/>
                   </FormControl>
                   <FormDescription>Use HH:MM format (24-hour).</FormDescription>
                   <FormMessage />
@@ -201,24 +219,25 @@ export function ShareRideForm() {
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      value={field.value} // Ensure value is controlled
+                      value={field.value} 
                       className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0"
+                      disabled={isSubmitting}
                     >
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="bike" id="bike" />
+                          <RadioGroupItem value="bike" id="bike" disabled={isSubmitting}/>
                         </FormControl>
                         <FormLabel htmlFor="bike" className="font-normal">Bike</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="car" id="car" />
+                          <RadioGroupItem value="car" id="car" disabled={isSubmitting}/>
                         </FormControl>
                         <FormLabel htmlFor="car" className="font-normal">Car</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="auto" id="auto" />
+                          <RadioGroupItem value="auto" id="auto" disabled={isSubmitting}/>
                         </FormControl>
                         <FormLabel htmlFor="auto" className="font-normal">Auto</FormLabel>
                       </FormItem>
@@ -236,7 +255,8 @@ export function ShareRideForm() {
                   <FormLabel>Seating Capacity (including driver)</FormLabel>
                   <FormControl>
                     <Input type="number" min="1" placeholder="e.g. 2" {...field} 
-                      onChange={event => field.onChange(+event.target.value)} // Ensure value is number
+                      onChange={event => field.onChange(+event.target.value)} 
+                      disabled={isSubmitting}
                     />
                   </FormControl>
                   {selectedVehicle === "bike" && <FormDescription>Max 2 for bike.</FormDescription>}
@@ -256,24 +276,25 @@ export function ShareRideForm() {
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      value={field.value} // Ensure value is controlled
+                      value={field.value} 
                       className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0"
+                      disabled={isSubmitting}
                     >
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="male" id="male"/>
+                          <RadioGroupItem value="male" id="male" disabled={isSubmitting}/>
                         </FormControl>
                         <FormLabel htmlFor="male" className="font-normal">Male</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="female" id="female"/>
+                          <RadioGroupItem value="female" id="female" disabled={isSubmitting}/>
                         </FormControl>
                         <FormLabel htmlFor="female" className="font-normal">Female</FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
-                          <RadioGroupItem value="other" id="other"/>
+                          <RadioGroupItem value="other" id="other" disabled={isSubmitting}/>
                         </FormControl>
                         <FormLabel htmlFor="other" className="font-normal">Other</FormLabel>
                       </FormItem>
@@ -283,7 +304,9 @@ export function ShareRideForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" size="lg">Share My Ride</Button>
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? "Sharing..." : "Share My Ride"}
+            </Button>
           </form>
         </Form>
       </CardContent>
