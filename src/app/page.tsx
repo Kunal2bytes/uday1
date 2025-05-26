@@ -75,11 +75,16 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 export default function DashboardPage() {
   const [originSearch, setOriginSearch] = useState("");
   const [destinationSearch, setDestinationSearch] = useState("");
-  const [filteredRides, setFilteredRides] = useState<Ride[]>(mockRides);
+  const [filteredRides, setFilteredRides] = useState<Ride[]>([]); // Initialize with empty array
 
   useEffect(() => {
-    const lowerOrigin = originSearch.toLowerCase();
-    const lowerDestination = destinationSearch.toLowerCase();
+    const lowerOrigin = originSearch.toLowerCase().trim();
+    const lowerDestination = destinationSearch.toLowerCase().trim();
+
+    if (!lowerOrigin && !lowerDestination) {
+      setFilteredRides([]); // Clear rides if both search inputs are empty
+      return;
+    }
 
     setFilteredRides(
       mockRides.filter(ride => {
@@ -89,6 +94,8 @@ export default function DashboardPage() {
       })
     );
   }, [originSearch, destinationSearch]);
+
+  const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center">
@@ -172,40 +179,42 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Available Rides Section */}
-          <section aria-labelledby="available-rides-header" className="space-y-4">
-            <h2 id="available-rides-header" className="text-xl font-semibold text-muted-foreground mb-4">Available Rides</h2>
-            {filteredRides.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4">
-                {filteredRides.map((ride) => (
-                  <Card key={ride.id} className="shadow-md hover:shadow-lg transition-shadow duration-200 bg-card text-card-foreground rounded-lg overflow-hidden">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center text-lg text-primary">
-                        <User className="mr-2 h-5 w-5" /> {ride.name}
-                      </CardTitle>
-                      <CardDescription className="text-xs">Vehicle: {ride.vehicle} | Gender: {ride.gender}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-1.5 text-sm">
-                      <div className="flex items-center">
-                        <Clock className="mr-2 h-4 w-4 text-muted-foreground" /> 
-                        <span className="font-medium">Time:</span>&nbsp;{ride.timeToGo}
-                      </div>
-                      <div className="flex items-center">
-                        <Route className="mr-2 h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">From:</span>&nbsp;{ride.origin}
-                      </div>
-                      <div className="flex items-center">
-                        <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">To:</span>&nbsp;{ride.destination}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-6">No rides found matching your criteria. Try adjusting your search.</p>
-            )}
-          </section>
+          {/* Available Rides Section - Conditionally Rendered */}
+          {showRidesList && (
+            <section aria-labelledby="available-rides-header" className="space-y-4">
+              <h2 id="available-rides-header" className="text-xl font-semibold text-muted-foreground mb-4">Available Rides</h2>
+              {filteredRides.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredRides.map((ride) => (
+                    <Card key={ride.id} className="shadow-md hover:shadow-lg transition-shadow duration-200 bg-card text-card-foreground rounded-lg overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center text-lg text-primary">
+                          <User className="mr-2 h-5 w-5" /> {ride.name}
+                        </CardTitle>
+                        <CardDescription className="text-xs">Vehicle: {ride.vehicle} | Gender: {ride.gender}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-1.5 text-sm">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" /> 
+                          <span className="font-medium">Time:</span>&nbsp;{ride.timeToGo}
+                        </div>
+                        <div className="flex items-center">
+                          <Route className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">From:</span>&nbsp;{ride.origin}
+                        </div>
+                        <div className="flex items-center">
+                          <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">To:</span>&nbsp;{ride.destination}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-6">No rides found matching your criteria. Try adjusting your search.</p>
+              )}
+            </section>
+          )}
 
           {/* Share a Ride Section */}
           <section aria-labelledby="share-ride-header">
