@@ -112,9 +112,11 @@ export default function DashboardPage() {
             <h1 className="text-xl font-bold mx-auto text-foreground">TransitGo</h1>
 
             <div className="flex items-center justify-end ml-2 sm:ml-0">
-              <Button variant="ghost" size="icon" aria-label="Map" className="shrink-0">
-                <MapPin className="h-5 w-5 text-foreground" />
-              </Button>
+              <Link href="/map" passHref legacyBehavior>
+                <Button variant="ghost" size="icon" aria-label="Map" className="shrink-0" asChild>
+                  <a><MapPin className="h-5 w-5 text-foreground" /></a>
+                </Button>
+              </Link>
             </div>
           </div>
         </header>
