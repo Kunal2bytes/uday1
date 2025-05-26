@@ -121,7 +121,7 @@ export default function DashboardPage() {
               </SheetContent>
             </Sheet>
             
-            <h1 className="text-xl font-bold mx-auto text-foreground">TransitGo</h1>
+            <h1 className="text-xl font-bold mx-auto text-foreground">HOPE</h1>
 
             <div className="flex items-center justify-end ml-2 sm:ml-0">
               <Link href="/map" passHref legacyBehavior>
@@ -247,4 +247,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
