@@ -4,7 +4,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Map as MapIcon } from "lucide-react";
 
@@ -24,21 +23,28 @@ export default function MapPage() {
             <h1 className="text-3xl font-bold text-center sm:text-left text-primary">Map View</h1>
           </div>
           <p className="text-muted-foreground text-center sm:text-left">
-            This is where the interactive map would be displayed.
+            View an interactive map below.
           </p>
         </header>
 
-        <div className="bg-card p-6 rounded-xl shadow-lg flex flex-col items-center justify-center">
-          <Image
-            src="https://placehold.co/800x600.png"
-            alt="Placeholder map"
-            width={800}
-            height={600}
-            className="rounded-lg shadow-md"
-            data-ai-hint="world map"
-          />
-          <p className="mt-4 text-muted-foreground">
-            Interactive map integration coming soon.
+        <div className="bg-card p-4 sm:p-6 rounded-xl shadow-lg">
+          <div className="aspect-w-16 aspect-h-9 sm:aspect-h-10 md:aspect-h-12 lg:aspect-h-9 xl:aspect-h-[7.5]"> 
+            {/* Maintain a responsive aspect ratio, e.g. 16:9 or similar. Adjust aspect-h-* as needed */}
+            {/* Or use a fixed height like h-[400px] sm:h-[500px] md:h-[600px] if preferred over aspect ratio */}
+            <iframe
+              src="https://maps.google.com/maps?q=world&output=embed&z=1" // Basic embed, q=world to show world, z=1 for zoom level
+              width="100%"
+              height="100%" // Will fill the aspect ratio container
+              style={{ border:0 }}
+              allowFullScreen={true}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="rounded-lg shadow-md w-full h-full"
+              title="Google Maps Embed"
+            ></iframe>
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground text-center">
+            This is a basic Google Maps embed. For full features and customization, a Google Maps API key is typically required.
           </p>
         </div>
       </div>
