@@ -31,6 +31,7 @@ const formSchema = z.object({
   district: z.string().min(2, "District name must be at least 2 characters."),
   city: z.string().min(2, "City name must be at least 2 characters."),
   routeNameOrNumber: z.string().min(1, "Route name or number is required."),
+  busNumber: z.string().optional(), // Optional bus number
   stops: z.array(stopSchema).min(1, "At least one stop is required."),
 });
 
@@ -45,6 +46,7 @@ export function ShareBusRouteForm() {
       district: "",
       city: "",
       routeNameOrNumber: "",
+      busNumber: "",
       stops: [{ stopName: "", scheduledTime: "" }],
     },
   });
@@ -123,19 +125,34 @@ export function ShareBusRouteForm() {
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="routeNameOrNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Route Name or Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Route 101, Downtown Express" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="routeNameOrNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Route Name or Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Route 101, Downtown Express" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="busNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bus Number (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. B-789, V-1234" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div>
               <FormLabel className="text-lg font-semibold">Stops & Schedule</FormLabel>

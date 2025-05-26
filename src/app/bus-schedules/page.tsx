@@ -161,6 +161,7 @@ export default function BusSchedulesPage() {
                   </CardTitle>
                   <CardDescription className="text-xs">
                     {route.city}, {route.district}, {route.state}
+                    {route.busNumber && ` | Bus No: ${route.busNumber}`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm flex-grow">
@@ -203,4 +204,3 @@ export default function BusSchedulesPage() {
     </div>
   );
 }
-
