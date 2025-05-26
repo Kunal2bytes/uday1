@@ -24,6 +24,7 @@ import {
 import type { Ride } from '@/lib/mockData'; 
 import { mockRides } from '@/lib/mockData'; 
 import { useToast } from "@/hooks/use-toast";
+import { formatTimeTo12Hour } from "@/lib/utils";
 
 const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; label: string; onClick?: () => void; href?: string }) => {
   const buttonContent = (
@@ -181,7 +182,7 @@ export default function DashboardPage() {
                       <CardContent className="space-y-1.5 text-sm flex-grow">
                         <div className="flex items-center">
                           <Clock className="mr-2 h-4 w-4 text-muted-foreground" /> 
-                          <span className="font-medium">Time:</span>&nbsp;{ride.timeToGo}
+                          <span className="font-medium">Time:</span>&nbsp;{formatTimeTo12Hour(ride.timeToGo)}
                         </div>
                         <div className="flex items-center">
                           <Route className="mr-2 h-4 w-4 text-muted-foreground" />

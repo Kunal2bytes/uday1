@@ -10,6 +10,7 @@ import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, CarTaxi
 import type { Ride } from '@/lib/mockData';
 import { mockRides } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
+import { formatTimeTo12Hour } from "@/lib/utils";
 
 const PageVehicleIcon = AutoIcon;
 const pageTitle = "Available Autos";
@@ -74,7 +75,7 @@ export default function BookAutoPage() {
                 <CardContent className="space-y-2 text-sm flex-grow">
                   <div className="flex items-center">
                     <Clock className="mr-2 h-4 w-4 text-muted-foreground" /> 
-                    <span className="font-medium">Time:</span>&nbsp;{ride.timeToGo}
+                    <span className="font-medium">Time:</span>&nbsp;{formatTimeTo12Hour(ride.timeToGo)}
                   </div>
                   <div className="flex items-center">
                     <Route className="mr-2 h-4 w-4 text-muted-foreground" />
