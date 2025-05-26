@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, Car as CarIcon, Phone } from "lucide-react";
 import type { Ride } from '@/lib/mockData';
-import { mockRides } from '@/lib/mockData';
+// import { mockRides } from '@/lib/mockData'; // Removed as mockRides is no longer exported
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 
@@ -17,7 +17,8 @@ const pageTitle = "Available Cars";
 const vehicleType: Ride["vehicle"] = "car";
 
 export default function BookCarPage() {
-  const filteredRides = mockRides.filter(ride => ride.vehicle === vehicleType);
+  // const filteredRides = mockRides.filter(ride => ride.vehicle === vehicleType); // Temporarily disabled
+  const filteredRides: Ride[] = []; // Rides will be fetched from Firestore later
   const { toast } = useToast();
 
   const passengerSeats = (capacity: number) => {
@@ -49,7 +50,7 @@ export default function BookCarPage() {
             <h1 className="text-3xl font-bold text-center sm:text-left text-primary">{pageTitle}</h1>
           </div>
           <p className="text-muted-foreground text-center sm:text-left">
-            Browse available {vehicleType}s shared by other users.
+            Browse available {vehicleType}s shared by other users. (Data will be fetched from Firestore)
           </p>
         </header>
 
@@ -107,7 +108,7 @@ export default function BookCarPage() {
           </div>
         ) : (
           <p className="text-center text-muted-foreground py-6">
-            No {vehicleType} rides found.
+            No {vehicleType} rides found. Rides will be fetched from Firestore.
           </p>
         )}
       </div>
