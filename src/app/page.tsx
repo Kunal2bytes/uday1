@@ -4,7 +4,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone, LogOut } from "lucide-react"; // Added LogOut
+import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone, LogOut } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -62,12 +62,12 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 };
 
 interface RideWithFirebase extends Omit<Ride, 'createdAt'> {
-  createdAt: Timestamp; // Specifically use Firebase Timestamp for objects from Firestore
+  createdAt: Timestamp; 
 }
 
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, signOutUser } = useAuth(); 
+  const { userEmail, loading: authLoading, signOutUser } = useAuth(); // userEmail instead of user
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
@@ -79,14 +79,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // AuthProvider handles initial redirection logic.
-    // This effect ensures that if user becomes null while on this page, they are redirected.
-    if (!authLoading && !user) {
-      router.push('/about-us'); // Redirect to about-us if not logged in
+    // This effect ensures that if userEmail becomes null while on this page, they are redirected.
+    if (!authLoading && !userEmail) {
+      router.push('/about-us'); // Redirect to about-us if not "logged in" (no email)
     }
-  }, [user, authLoading, router]);
+  }, [userEmail, authLoading, router]);
 
   useEffect(() => {
-    if (user) { 
+    if (userEmail) { // Fetch rides only if user is "logged in"
       const fetchRides = async () => {
         setIsLoadingRides(true);
         try {
@@ -111,7 +111,7 @@ export default function DashboardPage() {
       setFilteredRides([]);
       setIsLoadingRides(false);
     }
-  }, [user, toast]); 
+  }, [userEmail, toast]); 
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
@@ -178,9 +178,7 @@ export default function DashboardPage() {
     }
   };
 
-  // AuthProvider shows a global loader.
-  // If authLoading is true, or if not authLoading AND no user (should be caught by above effect), show minimal UI.
-  if (authLoading || (!authLoading && !user)) { 
+  if (authLoading || (!authLoading && !userEmail)) { 
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -241,7 +239,7 @@ export default function DashboardPage() {
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start text-base py-3 px-4 hover:bg-destructive/80 hover:text-destructive-foreground rounded-md flex items-center text-destructive"
-                    onClick={signOutUser}
+                    onClick={signOutUser} // This will call the new signOutUser
                   >
                     <LogOut className="mr-2 h-5 w-5" />
                     Sign Out
