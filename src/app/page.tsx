@@ -102,9 +102,15 @@ export default function DashboardPage() {
         console.log('App shared successfully');
       } catch (error) {
         console.error('Error sharing app:', error);
+        let description = "Could not share the app at this moment. Please try again.";
+        if (error instanceof Error && error.name === 'NotAllowedError') {
+          description = "Sharing was blocked by your browser. This can happen if the request wasn't triggered by a direct user action or due to security settings.";
+        } else if (error instanceof Error && error.name === 'AbortError') {
+          description = "Sharing was cancelled.";
+        }
         toast({
           title: "Sharing Failed",
-          description: "Could not share the app at this moment.",
+          description: description,
           variant: "destructive",
         });
       }
@@ -157,7 +163,7 @@ export default function DashboardPage() {
                   </Button>
                   <Button 
                     variant="ghost" 
-                    className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md"
+                    className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md flex items-center"
                     onClick={handleShareApp}
                   >
                     <Share2 className="mr-2 h-5 w-5" />
