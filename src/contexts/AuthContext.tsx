@@ -6,14 +6,14 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { User, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
-import { Button } from '@/components/ui/button'; // For loading screen
+import { Button } from '@/components/ui/button'; 
 import { useToast } from "@/hooks/use-toast";
-import { FirebaseError } from 'firebase/app'; // Import FirebaseError for specific error checking
+import { FirebaseError } from 'firebase/app'; 
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (emailHint?: string) => Promise<void>; // Added emailHint
   signOutUser: () => Promise<void>;
 }
 
@@ -39,28 +39,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const isSignInPage = pathname === '/signin';
       const isPublicInfoPage = pathname === '/terms-and-conditions' || pathname === '/about-us';
 
-      if (!user) { // User is not logged in
-        // Allow access to signin, terms, and about-us.
-        // If trying to access any other page, redirect to about-us as the new entry point.
+      if (!user) { 
         if (!isSignInPage && !isPublicInfoPage) {
           router.push('/about-us');
         }
-      } else { // User is logged in
-        if (isSignInPage) { // If user is logged in and on signin page (e.g., after successful login navigated by Firebase)
-          router.push('/'); // Redirect to dashboard
+      } else { 
+        if (isSignInPage) {
+          router.push('/'); 
         }
-        // If user is logged in and on /about-us or /terms-and-conditions, or dashboard, let them stay.
-        // Navigation from /about-us to dashboard is handled by its button click.
       }
     }
   }, [user, loading, pathname, router]);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (emailHint?: string) => {
     setLoading(true);
     try {
+      if (emailHint) {
+        googleProvider.setCustomParameters({ login_hint: emailHint });
+      } else {
+        // Ensure no lingering hints
+        googleProvider.setCustomParameters({});
+      }
       await signInWithPopup(auth, googleProvider);
-      // After successful sign-in, the useEffect above will handle redirection if necessary,
-      // or the calling page (e.g., AboutUsPage) can navigate.
+      // Successful sign-in, user state will update via onAuthStateChanged
+      // Redirection logic in the useEffect hook will handle navigation.
     } catch (error) {
       console.error("-----------------------------------------------------");
       console.error("Detailed error during signInWithGoogle:", error);
@@ -78,9 +80,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else if (error.code === 'auth/popup-closed-by-user') {
           title = "Sign-In Cancelled";
           description = "The sign-in popup was closed before completing. Please try again if you wish to sign in.";
-        } else if (error.code === 'auth/cancelled-popup-request') {
-          title = "Sign-In Cancelled";
-          description = "Multiple sign-in popups were opened. The request was cancelled. Please try again.";
+        } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-blocked') {
+          title = "Sign-In Problem";
+          description = "The sign-in popup was cancelled or blocked by the browser. Please ensure popups are allowed and try again.";
         } else {
           description = `Firebase Error: ${error.message} (Code: ${error.code})`;
         }
@@ -97,9 +99,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         variant: "destructive",
         duration: 15000, 
       });
-      throw error; // Re-throw error so calling components can also catch if needed
+      throw error; 
     } finally {
       setLoading(false);
+      // Clear custom parameters after attempt so they don't affect next generic sign-in
+      googleProvider.setCustomParameters({});
     }
   };
 
@@ -107,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signOut(auth);
-      router.push('/about-us'); // After sign out, go to about-us page
+      router.push('/about-us'); 
     } catch (error) {
       console.error("Error signing out: ", error);
       toast({
@@ -120,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  if (loading) {
+  if (loading && (pathname === '/signin' || pathname === '/about-us' || pathname === '/')) { // Show global loader for key pages during auth init
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -132,20 +136,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
   }
   
-  // This specific check might be redundant if the useEffect above handles redirection correctly.
-  // const isPublicPage = pathname === '/signin' || pathname === '/terms-and-conditions' || pathname === '/about-us';
-  // if (!user && !isPublicPage && !loading) {
-  //   return (
-  //     <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-  //       <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-  //         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-  //         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-  //       </svg>
-  //       <p className="text-lg">Please wait...</p>
-  //     </div>
-  //   );
-  // }
-
   return (
     <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOutUser }}>
       {children}
