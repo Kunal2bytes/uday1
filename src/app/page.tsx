@@ -117,9 +117,15 @@ export default function DashboardPage() {
                       <a>Terms and Conditions</a>
                     </Button>
                   </Link>
-                  <Button variant="ghost" className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md">
-                    About Us
-                  </Button>
+                  <Link href="/about-us" passHref legacyBehavior>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md"
+                      asChild
+                    >
+                      <a>About Us</a>
+                    </Button>
+                  </Link>
                   <Button variant="ghost" className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md">
                     Your Rides
                   </Button>
@@ -253,3 +259,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
