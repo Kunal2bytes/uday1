@@ -1,3 +1,4 @@
+
 // src/lib/firebase.ts
 
 import { initializeApp, type FirebaseApp } from 'firebase/app';
@@ -5,14 +6,13 @@ import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore'; // Import getFirestore
 
 // Your web app's Firebase configuration
-// IMPORTANT: Replace with your actual Firebase project configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY", // Replace with your API Key
-  authDomain: "YOUR_AUTH_DOMAIN", // Replace with your Auth Domain
-  projectId: "YOUR_PROJECT_ID", // Replace with your Project ID
-  storageBucket: "YOUR_STORAGE_BUCKET", // Replace with your Storage Bucket
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Replace with your Messaging Sender ID
-  appId: "YOUR_APP_ID" // Replace with your App ID
+  apiKey: "AIzaSyBVs8l73id-GPce_n1JEdm_S_gEAql3R30",
+  authDomain: "project-hope-a64cd.firebaseapp.com",
+  projectId: "project-hope-a64cd",
+  storageBucket: "project-hope-a64cd.appspot.com",
+  messagingSenderId: "163623312354",
+  appId: "YOUR_APP_ID" // Make sure to replace this with your actual App ID from Firebase Console
 };
 
 // Initialize Firebase
