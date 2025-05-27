@@ -108,9 +108,15 @@ export default function DashboardPage() {
                   <SheetTitle className="text-2xl font-semibold text-foreground">Menu</SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col space-y-3">
-                  <Button variant="ghost" className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md">
-                    Terms and Conditions
-                  </Button>
+                  <Link href="/terms-and-conditions" passHref legacyBehavior>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md"
+                      asChild
+                    >
+                      <a>Terms and Conditions</a>
+                    </Button>
+                  </Link>
                   <Button variant="ghost" className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md">
                     About Us
                   </Button>
