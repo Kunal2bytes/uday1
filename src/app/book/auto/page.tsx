@@ -2,30 +2,45 @@
 // src/app/book/auto/page.tsx
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, CarTaxiFront as AutoIcon, Phone } from "lucide-react";
 import type { Ride } from '@/lib/mockData';
-// import { mockRides } from '@/lib/mockData'; // Removed as mockRides is no longer exported
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 
 const PageVehicleIcon = AutoIcon;
 const pageTitle = "Available Autos";
 const vehicleType: Ride["vehicle"] = "auto";
 
 export default function BookAutoPage() {
-  // const filteredRides = mockRides.filter(ride => { // Temporarily disabled
-  //   if (ride.vehicle !== vehicleType) return false;
-  //   if (ride.distanceKm === undefined || ride.distanceKm > 1) { // Auto-specific filter
-  //     return false;
-  //   }
-  //   return true;
-  // });
-  const filteredRides: Ride[] = []; // Rides will be fetched from Firestore later
+  const [autoRides, setAutoRides] = useState<Ride[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchAutoRides = async () => {
+      setIsLoading(true);
+      try {
+        const ridesRef = collection(db, "rides");
+        // The distanceKm filter is removed for now as ShareRideForm doesn't collect it.
+        // We can add a mechanism to collect/calculate distance later if needed.
+        const q = query(ridesRef, where("vehicle", "==", vehicleType), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride));
+        setAutoRides(ridesData);
+      } catch (error) {
+        console.error("Error fetching auto rides:", error);
+        toast({ title: "Error", description: "Could not fetch auto rides.", variant: "destructive" });
+      }
+      setIsLoading(false);
+    };
+    fetchAutoRides();
+  }, [toast]);
 
   const passengerSeats = (capacity: number) => {
     if (capacity <= 1) return "0 (Driver only)";
@@ -56,13 +71,15 @@ export default function BookAutoPage() {
             <h1 className="text-3xl font-bold text-center sm:text-left text-primary">{pageTitle}</h1>
           </div>
           <p className="text-muted-foreground text-center sm:text-left">
-            Browse available {vehicleType}s shared by other users (Data will be fetched from Firestore).
+            Browse available {vehicleType}s shared by other users.
           </p>
         </header>
 
-        {filteredRides.length > 0 ? (
+        {isLoading ? (
+          <p className="text-center text-muted-foreground py-6">Loading auto rides...</p>
+        ) : autoRides.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
-            {filteredRides.map((ride) => (
+            {autoRides.map((ride) => (
               <Card key={ride.id} className="shadow-md hover:shadow-lg transition-shadow duration-200 bg-card text-card-foreground rounded-lg overflow-hidden flex flex-col">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center text-lg text-primary">
@@ -70,7 +87,8 @@ export default function BookAutoPage() {
                   </CardTitle>
                   <CardDescription className="text-xs">
                     Vehicle: {ride.vehicle} | Driver's Gender: {ride.gender}
-                    {ride.distanceKm !== undefined && ` | Distance: ${ride.distanceKm}km`}
+                    {/* Removed distanceKm display as it's not consistently available 
+                    {ride.distanceKm !== undefined && ` | Distance: ${ride.distanceKm}km`} */}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm flex-grow">
@@ -115,7 +133,7 @@ export default function BookAutoPage() {
           </div>
         ) : (
           <p className="text-center text-muted-foreground py-6">
-            No {vehicleType} rides found. Rides will be fetched from Firestore.
+            No {vehicleType} rides found.
           </p>
         )}
       </div>

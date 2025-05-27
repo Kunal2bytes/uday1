@@ -2,24 +2,43 @@
 // src/app/book/car/page.tsx
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, Car as CarIcon, Phone } from "lucide-react";
 import type { Ride } from '@/lib/mockData';
-// import { mockRides } from '@/lib/mockData'; // Removed as mockRides is no longer exported
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 
 const PageVehicleIcon = CarIcon;
 const pageTitle = "Available Cars";
 const vehicleType: Ride["vehicle"] = "car";
 
 export default function BookCarPage() {
-  // const filteredRides = mockRides.filter(ride => ride.vehicle === vehicleType); // Temporarily disabled
-  const filteredRides: Ride[] = []; // Rides will be fetched from Firestore later
+  const [carRides, setCarRides] = useState<Ride[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchCarRides = async () => {
+      setIsLoading(true);
+      try {
+        const ridesRef = collection(db, "rides");
+        const q = query(ridesRef, where("vehicle", "==", vehicleType), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride));
+        setCarRides(ridesData);
+      } catch (error) {
+        console.error("Error fetching car rides:", error);
+        toast({ title: "Error", description: "Could not fetch car rides.", variant: "destructive" });
+      }
+      setIsLoading(false);
+    };
+    fetchCarRides();
+  }, [toast]);
 
   const passengerSeats = (capacity: number) => {
     if (capacity <= 1) return "0 (Driver only)";
@@ -50,13 +69,15 @@ export default function BookCarPage() {
             <h1 className="text-3xl font-bold text-center sm:text-left text-primary">{pageTitle}</h1>
           </div>
           <p className="text-muted-foreground text-center sm:text-left">
-            Browse available {vehicleType}s shared by other users. (Data will be fetched from Firestore)
+            Browse available {vehicleType}s shared by other users.
           </p>
         </header>
 
-        {filteredRides.length > 0 ? (
+        {isLoading ? (
+           <p className="text-center text-muted-foreground py-6">Loading car rides...</p>
+        ) : carRides.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
-            {filteredRides.map((ride) => (
+            {carRides.map((ride) => (
               <Card key={ride.id} className="shadow-md hover:shadow-lg transition-shadow duration-200 bg-card text-card-foreground rounded-lg overflow-hidden flex flex-col">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center text-lg text-primary">
@@ -108,7 +129,7 @@ export default function BookCarPage() {
           </div>
         ) : (
           <p className="text-center text-muted-foreground py-6">
-            No {vehicleType} rides found. Rides will be fetched from Firestore.
+            No {vehicleType} rides found.
           </p>
         )}
       </div>

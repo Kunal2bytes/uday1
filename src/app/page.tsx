@@ -22,9 +22,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Ride } from '@/lib/mockData'; 
-// import { mockRides } from '@/lib/mockData'; // This line was already commented or removed for Firestore integration
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
 const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; label: string; onClick?: () => void; href?: string }) => {
   const buttonContent = (
@@ -60,8 +61,33 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 export default function DashboardPage() {
   const [originSearch, setOriginSearch] = useState("");
   const [destinationSearch, setDestinationSearch] = useState("");
+  const [allRidesFromDB, setAllRidesFromDB] = useState<Ride[]>([]);
   const [filteredRides, setFilteredRides] = useState<Ride[]>([]);
+  const [isLoadingRides, setIsLoadingRides] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchRides = async () => {
+      setIsLoadingRides(true);
+      try {
+        const ridesCollectionRef = collection(db, "rides");
+        // Consider adding orderBy('createdAt', 'desc') if you want to show newest rides first
+        const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride));
+        setAllRidesFromDB(ridesData);
+      } catch (error) {
+        console.error("Error fetching rides from Firestore: ", error);
+        toast({
+          title: "Error Fetching Rides",
+          description: "Could not load rides from the database. Please try again later.",
+          variant: "destructive",
+        });
+      }
+      setIsLoadingRides(false);
+    };
+    fetchRides();
+  }, [toast]);
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
@@ -72,13 +98,18 @@ export default function DashboardPage() {
       return;
     }
 
-    // TODO: Replace this with Firestore fetching logic
-    // For now, setFilteredRides to empty as mockRides is no longer available.
-    // This will fix the build error but temporarily disables search functionality
-    // until Firestore read is implemented for the dashboard.
-    setFilteredRides([]); 
+    const results = allRidesFromDB.filter(ride => {
+      const rideOriginLower = ride.origin.toLowerCase();
+      const rideDestinationLower = ride.destination.toLowerCase();
+      
+      const originMatch = lowerOrigin ? rideOriginLower.includes(lowerOrigin) : true;
+      const destinationMatch = lowerDestination ? rideDestinationLower.includes(lowerDestination) : true;
+      
+      return originMatch && destinationMatch;
+    });
+    setFilteredRides(results);
 
-  }, [originSearch, destinationSearch]); 
+  }, [originSearch, destinationSearch, allRidesFromDB]); 
 
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
@@ -220,7 +251,9 @@ export default function DashboardPage() {
           {showRidesList && (
             <section aria-labelledby="available-rides-header" className="space-y-4">
               <h2 id="available-rides-header" className="text-xl font-semibold text-muted-foreground mb-4">Available Shared Rides</h2>
-              {filteredRides.length > 0 ? (
+              {isLoadingRides ? (
+                <p className="text-center text-muted-foreground py-6">Loading rides...</p>
+              ) : filteredRides.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
                   {filteredRides.map((ride) => (
                     <Card key={ride.id} className="shadow-md hover:shadow-lg transition-shadow duration-200 bg-card text-card-foreground rounded-lg overflow-hidden flex flex-col">
@@ -266,7 +299,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-6">No shared rides found matching your criteria. Try adjusting your search or check back later as rides are shared from Firestore.</p>
+                <p className="text-center text-muted-foreground py-6">No shared rides found matching your criteria.</p>
               )}
             </section>
           )}
