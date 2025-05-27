@@ -1,8 +1,7 @@
 // src/lib/firebase.ts
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, type Firestore } from "firebase/firestore";
-// import { getAuth } from "firebase/auth"; // Example for Firebase Auth
-// import { getStorage } from "firebase/storage"; // Example for Firebase Storage
+import { getAuth, GoogleAuthProvider } from "firebase/auth"; // Import getAuth and GoogleAuthProvider
 
 // Your web app's Firebase configuration
 // IMPORTANT: Replace these with your actual Firebase project credentials
@@ -25,7 +24,7 @@ if (!getApps().length) {
 }
 
 const db: Firestore = getFirestore(app);
-// const auth = getAuth(app); // Example for Firebase Auth
-// const storage = getStorage(app); // Example for Firebase Storage
+const auth = getAuth(app); // Initialize Firebase Auth
+const googleProvider = new GoogleAuthProvider(); // Create Google Auth Provider instance
 
-export { app, db /*, auth, storage */ };
+export { app, db, auth, googleProvider };

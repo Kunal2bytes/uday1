@@ -1,9 +1,9 @@
-
+// src/app/page.tsx (Dashboard)
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone } from "lucide-react";
+import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone, LogOut } from "lucide-react"; // Added LogOut
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -25,7 +25,9 @@ import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { useRouter } from "next/navigation"; // Import useRouter
 
 const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; label: string; onClick?: () => void; href?: string }) => {
   const buttonContent = (
@@ -59,6 +61,9 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 };
 
 export default function DashboardPage() {
+  const { user, loading, signOutUser } = useAuth(); // Get user, loading, and signOutUser
+  const router = useRouter();
+
   const [originSearch, setOriginSearch] = useState("");
   const [destinationSearch, setDestinationSearch] = useState("");
   const [allRidesFromDB, setAllRidesFromDB] = useState<Ride[]>([]);
@@ -67,34 +72,49 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchRides = async () => {
-      setIsLoadingRides(true);
-      try {
-        const ridesCollectionRef = collection(db, "rides");
-        // Consider adding orderBy('createdAt', 'desc') if you want to show newest rides first
-        const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-        const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride));
-        setAllRidesFromDB(ridesData);
-      } catch (error) {
-        console.error("Error fetching rides from Firestore: ", error);
-        toast({
-          title: "Error Fetching Rides",
-          description: "Could not load rides from the database. Please try again later.",
-          variant: "destructive",
-        });
-      }
+    // AuthProvider handles initial redirection if not logged in.
+    // This effect is mainly to ensure that if the user state changes while on this page,
+    // we react accordingly (e.g., if token expires and user becomes null).
+    if (!loading && !user) {
+      router.push('/signin'); 
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (user) { // Fetch rides only if user is logged in
+      const fetchRides = async () => {
+        setIsLoadingRides(true);
+        try {
+          const ridesCollectionRef = collection(db, "rides");
+          const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
+          const querySnapshot = await getDocs(q);
+          const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride));
+          setAllRidesFromDB(ridesData);
+        } catch (error) {
+          console.error("Error fetching rides from Firestore: ", error);
+          toast({
+            title: "Error Fetching Rides",
+            description: "Could not load rides from the database. Please try again later.",
+            variant: "destructive",
+          });
+        }
+        setIsLoadingRides(false);
+      };
+      fetchRides();
+    } else {
+      // If no user, clear rides and set loading to false
+      setAllRidesFromDB([]);
+      setFilteredRides([]);
       setIsLoadingRides(false);
-    };
-    fetchRides();
-  }, [toast]);
+    }
+  }, [user, toast]); // Depend on user
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
     const lowerDestination = destinationSearch.toLowerCase().trim();
 
     if (!lowerOrigin && !lowerDestination) {
-      setFilteredRides([]);
+      setFilteredRides([]); // Clear results if search is empty
       return;
     }
 
@@ -154,6 +174,20 @@ export default function DashboardPage() {
     }
   };
 
+  // AuthProvider shows a global loader.
+  // If loading or if not loading and no user, show specific loading for this page or null.
+  if (loading || (!loading && !user)) { 
+    return (
+       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
+        <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p className="text-lg">Loading Dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center">
       <div className="w-full max-w-lg">
@@ -199,6 +233,14 @@ export default function DashboardPage() {
                   >
                     <Share2 className="mr-2 h-5 w-5" />
                     Share this App
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-base py-3 px-4 hover:bg-destructive/80 hover:text-destructive-foreground rounded-md flex items-center text-destructive"
+                    onClick={signOutUser}
+                  >
+                    <LogOut className="mr-2 h-5 w-5" />
+                    Sign Out
                   </Button>
                 </nav>
               </SheetContent>
