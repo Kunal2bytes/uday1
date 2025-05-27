@@ -54,8 +54,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await signInWithPopup(auth, googleProvider);
       // Redirection to /about-us will be handled by the useEffect above after auth state changes
     } catch (error) {
-      console.error("Error signing in with Google: ", error);
-      // Handle error (e.g., show toast)
+      console.error("-----------------------------------------------------");
+      console.error("Detailed error during signInWithGoogle:", error);
+      if (error instanceof Error) {
+        console.error("Error Name:", error.name);
+        console.error("Error Message:", error.message);
+        // FirebaseError often has a 'code' property
+        const firebaseError = error as any; // Use type assertion cautiously
+        if (firebaseError.code) {
+          console.error("Firebase Error Code:", firebaseError.code);
+        }
+        if (firebaseError.customData) {
+          console.error("Firebase Custom Data:", firebaseError.customData);
+        }
+        if (error.stack) {
+          console.error("Error Stack:", error.stack);
+        }
+      }
+      console.error("-----------------------------------------------------");
+      // Handle error (e.g., show toast) - A toast for auth/unauthorized-domain might also be helpful
       setLoading(false); // Reset loading on error
     }
   };
