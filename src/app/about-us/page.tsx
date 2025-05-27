@@ -11,21 +11,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'; 
 
 export default function AboutUsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { userEmail, loading: authLoading } = useAuth(); // Using userEmail now
   const router = useRouter();
-  const [isProcessing, setIsProcessing] = useState(false); // For the "Got it" button
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // This page is public, AuthProvider handles redirection if a user
-  // tries to access protected routes without auth.
-  // If user is already authenticated, they can still view this page.
+  // This page is public. AuthProvider handles redirection if a user
+  // tries to access protected routes without an email set.
 
   const handleGotItClick = async () => {
     setIsProcessing(true);
-    // If user is authenticated, go to dashboard
-    // If not, clicking "Got it" implies they need to sign in first.
-    // However, the dashboard itself is protected by AuthContext which will redirect to /signin.
-    // So, we can always just try to go to the dashboard.
-    router.push('/');
+    if (userEmail) {
+      // If email is already set (user is "signed in"), go to dashboard
+      router.push('/');
+    } else {
+      // If no email, direct to signin page to enter email
+      router.push('/signin');
+    }
     // setIsProcessing(false); // Navigation will occur
   };
   
@@ -115,7 +116,7 @@ export default function AboutUsPage() {
               size="lg" 
               className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3 px-8 rounded-lg shadow-md transition-transform duration-150 hover:scale-105 flex items-center"
               onClick={handleGotItClick}
-              disabled={isProcessing || authLoading} // Disable if auth is loading generally, or this button is processing
+              disabled={isProcessing || authLoading} 
             >
               {isProcessing ? (
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -67,7 +67,7 @@ interface RideWithFirebase extends Omit<Ride, 'createdAt'> {
 
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, signOutUser } = useAuth();
+  const { userEmail, loading: authLoading, signOutUser } = useAuth(); // Using userEmail now
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
@@ -79,14 +79,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // AuthProvider handles initial redirection logic.
-    // This effect ensures that if user becomes null while on this page, they are redirected.
-    if (!authLoading && !user) {
-      router.push('/signin'); 
+    // This effect ensures that if userEmail becomes null while on this page, they are redirected.
+    if (!authLoading && !userEmail) {
+      router.push('/about-us'); // Redirect to about-us if not "signed in"
     }
-  }, [user, authLoading, router]);
+  }, [userEmail, authLoading, router]);
 
   useEffect(() => {
-    if (user) { // Fetch rides only if user is logged in
+    if (userEmail) { // Fetch rides only if userEmail is set
       const fetchRides = async () => {
         setIsLoadingRides(true);
         try {
@@ -111,7 +111,7 @@ export default function DashboardPage() {
       setFilteredRides([]);
       setIsLoadingRides(false);
     }
-  }, [user, toast]); 
+  }, [userEmail, toast]); 
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
@@ -178,7 +178,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading || (!authLoading && !user)) { 
+  if (authLoading || (!authLoading && !userEmail)) { 
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
