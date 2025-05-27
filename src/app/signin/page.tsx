@@ -10,30 +10,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
-
-// Using a generic Google SVG icon as lucide-react doesn't have a direct Google logo
-const GoogleIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="mr-2 h-5 w-5">
-    <path d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.19,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.19,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.19,22C17.6,22 21.54,18.33 21.54,12.81C21.54,11.76 21.35,11.1 21.35,11.1Z" />
-  </svg>
-);
-
+import { LogIn } from 'lucide-react'; // Using a generic LogIn icon
 
 export default function SignInPage() {
-  const { signInWithGoogle, user, loading: authLoading } = useAuth();
+  const { signInWithEnteredEmail, userEmail, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // Redirection is handled by AuthProvider.
-    // If user becomes non-null while on this page,
-    // AuthProvider's effect should redirect them to /about-us.
-    if (!authLoading && user) {
-      router.push('/about-us');
+    // If userEmail is already set (e.g., from localStorage) and not loading, redirect to dashboard
+    if (!authLoading && userEmail) {
+      router.push('/');
     }
-  }, [user, authLoading, router]);
+  }, [userEmail, authLoading, router]);
 
   const handleSignIn = async () => {
     if (!email.trim()) {
@@ -44,7 +35,6 @@ export default function SignInPage() {
       });
       return;
     }
-    // Basic email validation (can be more robust)
     if (!/\S+@\S+\.\S+/.test(email)) {
         toast({
             title: "Invalid Email",
@@ -56,17 +46,17 @@ export default function SignInPage() {
 
     setIsProcessing(true);
     try {
-      await signInWithGoogle(email); // Pass email as a hint
-      // On success, AuthContext will handle redirection via its useEffect.
+      await signInWithEnteredEmail(email);
+      // On success, AuthContext will set userEmail and redirect via its useEffect or signInWithEnteredEmail itself
     } catch (error) {
-      // Error is already handled and toasted in AuthContext's signInWithGoogle
+      // Error is already handled and toasted in AuthContext's signInWithEnteredEmail
       console.error("Sign-in attempt from SignInPage failed, error handled by AuthContext:", error);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (authLoading && !user) { // Show loader if auth is loading and no user yet
+  if (authLoading && !userEmail) { 
      return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -78,8 +68,6 @@ export default function SignInPage() {
     );
   }
   
-  // If user is already logged in and auth is not loading, AuthContext effect should redirect.
-  // This return is for when user is not logged in and auth is not loading.
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-primary/10 p-6">
       <div className="w-full max-w-md text-center">
@@ -93,7 +81,7 @@ export default function SignInPage() {
         </p>
         
         <div className="bg-card p-8 rounded-xl shadow-2xl space-y-6">
-          <h2 className="text-2xl font-semibold text-card-foreground">Sign In or Create Account</h2>
+          <h2 className="text-2xl font-semibold text-card-foreground">Enter App</h2>
           
           <div className="space-y-2 text-left">
             <Label htmlFor="email-input" className="text-sm font-medium text-muted-foreground">Enter your Gmail</Label>
@@ -114,7 +102,7 @@ export default function SignInPage() {
             disabled={authLoading || isProcessing}
             size="lg"
           >
-            <GoogleIcon />
+            <LogIn className="mr-2 h-5 w-5" />
             <span>{isProcessing ? "Processing..." : "Go"}</span>
           </Button>
           <p className="text-xs text-muted-foreground mt-6">

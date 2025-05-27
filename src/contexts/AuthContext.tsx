@@ -3,34 +3,38 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User as FirebaseUser, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase'; 
 import { useRouter, usePathname } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
-import { FirebaseError } from 'firebase/app';
 
 interface AuthContextType {
-  user: FirebaseUser | null; 
+  userEmail: string | null; // Changed from FirebaseUser to string | null
   loading: boolean;
-  signInWithGoogle: (emailHint?: string) => Promise<void>; 
+  signInWithEnteredEmail: (email: string) => Promise<void>; // Renamed and changed signature
   signOutUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const USER_EMAIL_KEY = 'hopeAppUserEmail';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    // Check localStorage for a persisted email on initial load
+    try {
+      const storedEmail = localStorage.getItem(USER_EMAIL_KEY);
+      if (storedEmail) {
+        setUserEmail(storedEmail);
+      }
+    } catch (error) {
+      console.error("Could not access localStorage:", error);
+      // Handle environments where localStorage might not be available or is restricted
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -38,65 +42,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const isPublicPage = pathname === '/about-us' || pathname === '/terms-and-conditions';
       const isSignInPage = pathname === '/signin';
 
-      if (!user) { // Not logged in
+      if (!userEmail) { // Not "logged in"
         if (!isPublicPage && !isSignInPage) {
-          router.push('/signin');
+          router.push('/about-us'); // Default to about-us if not logged in and trying to access protected page
         }
-      } else { // Logged in
+      } else { // "Logged in"
         if (isSignInPage) {
-          router.push('/about-us'); // After login, always go to about-us first
+          router.push('/'); // If logged in and on signin page, go to dashboard
         }
       }
     }
-  }, [user, loading, pathname, router]);
+  }, [userEmail, loading, pathname, router]);
 
-  const signInWithGoogle = async (emailHint?: string) => {
+  const signInWithEnteredEmail = async (email: string) => {
     setLoading(true);
-    if (emailHint) {
-      googleProvider.setCustomParameters({ login_hint: emailHint });
+    // Basic email validation (can be more robust)
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+        toast({
+            title: "Invalid Email",
+            description: "Please enter a valid email address.",
+            variant: "destructive",
+        });
+        setLoading(false);
+        return;
     }
     try {
-      await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged will handle setting user and redirecting to /about-us
+      localStorage.setItem(USER_EMAIL_KEY, email);
+      setUserEmail(email);
+      // After "signing in" with email, redirect to dashboard
+      router.push('/'); 
     } catch (error) {
-      console.error("-----------------------------------------------------");
-      console.error("Detailed error during signInWithGoogle:", error);
-      
-      let title = "Sign-In Failed";
-      let description = "An unexpected error occurred. Please try again.";
-
-      if (error instanceof FirebaseError) {
-        console.error("Firebase Error Code:", error.code);
-        console.error("Firebase Error Message:", error.message);
-        if (error.code === 'auth/popup-closed-by-user') {
-          title = "Sign-In Cancelled";
-          description = "The sign-in process was cancelled.";
-        } else if (error.code === 'auth/unauthorized-domain') {
-          title = "Sign-In Error: Unauthorized Domain";
-          description = "This domain is not authorized for Google Sign-In. Please check your Firebase project console settings for 'localhost' and your production domain under Authentication > Settings > Authorized domains. Ensure your client-side `authDomain` in `firebase.ts` is correct. Wait for propagation and try a hard refresh or incognito window.";
-          toast({ title, description, variant: "destructive", duration: 15000 });
-        } else {
-          description = `Error: ${error.message} (Code: ${error.code})`;
-        }
-      } else if (error instanceof Error) {
-        console.error("Error Name:", error.name);
-        console.error("Error Message:", error.message);
-        description = error.message;
-      }
-      toast({ title, description, variant: "destructive", duration: 9000 });
+      console.error("Error during simulated sign-in:", error);
+      toast({ title: "Error", description: "Could not save email.", variant: "destructive" });
     } finally {
       setLoading(false);
-      googleProvider.setCustomParameters({}); // Clear custom params like login_hint
     }
   };
 
   const signOutUser = async () => {
     setLoading(true);
     try {
-      await signOut(auth);
-      // onAuthStateChanged will handle setting user to null
+      localStorage.removeItem(USER_EMAIL_KEY);
+      setUserEmail(null);
       router.push('/signin'); // Redirect to signin page after sign out
-    } catch (error) {
+    } catch (error)      {
       console.error("Error signing out: ", error);
       toast({
         title: "Sign-Out Failed",
@@ -108,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Show global loader for initial auth check or during transitions on sensitive pages
+  // Show global loader for initial localStorage check or during transitions
   if (loading && (pathname === '/' || pathname === '/signin' || pathname === '/about-us')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
@@ -122,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
   
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOutUser }}>
+    <AuthContext.Provider value={{ userEmail, loading, signInWithEnteredEmail, signOutUser }}>
       {children}
     </AuthContext.Provider>
   );
