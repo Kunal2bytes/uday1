@@ -3,98 +3,102 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-// Firebase Auth (Google specific) is no longer used for sign-in.
-// import { User as FirebaseUser, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-// import { auth, googleProvider } from '@/lib/firebase'; // auth and googleProvider might not be needed if no Firebase Auth features are used.
+import { User as FirebaseUser, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase'; 
 import { useRouter, usePathname } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
-// FirebaseError might still be useful if other Firebase services are used and can throw it.
-// For now, we'll use generic Error for simplicity of this specific change.
+import { FirebaseError } from 'firebase/app';
 
 interface AuthContextType {
-  userEmail: string | null; // Changed from Firebase User to string (email)
+  user: FirebaseUser | null; 
   loading: boolean;
-  signInWithEmail: (email: string) => Promise<void>; // New sign-in method
+  signInWithGoogle: (emailHint?: string) => Promise<void>; 
   signOutUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check localStorage for a saved email on initial load
-    try {
-      const storedEmail = localStorage.getItem('hopeUserEmail');
-      if (storedEmail) {
-        setUserEmail(storedEmail);
-      }
-    } catch (error) {
-      console.error("Error reading email from localStorage:", error);
-      // Potentially localStorage is not available (e.g. SSR or privacy settings)
-    }
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe(); // Cleanup subscription on unmount
   }, []);
 
   useEffect(() => {
     if (!loading) {
+      const isPublicPage = pathname === '/about-us' || pathname === '/terms-and-conditions';
       const isSignInPage = pathname === '/signin';
-      const isPublicInfoPage = pathname === '/terms-and-conditions' || pathname === '/about-us';
 
-      if (!userEmail) { // If no email (user is not "logged in")
-        if (!isSignInPage && !isPublicInfoPage) {
-          router.push('/about-us'); // Default to about-us if not logged in and trying to access other pages
+      if (!user) { // Not logged in
+        if (!isPublicPage && !isSignInPage) {
+          router.push('/signin');
         }
-      } else { // If email exists (user is "logged in")
+      } else { // Logged in
         if (isSignInPage) {
-          router.push('/'); // If logged in and on signin page, go to dashboard
+          router.push('/about-us'); // After login, always go to about-us first
         }
-        // If on about-us, they can proceed to dashboard via its button.
       }
     }
-  }, [userEmail, loading, pathname, router]);
+  }, [user, loading, pathname, router]);
 
-  const signInWithEmail = async (email: string) => {
+  const signInWithGoogle = async (emailHint?: string) => {
     setLoading(true);
+    if (emailHint) {
+      googleProvider.setCustomParameters({ login_hint: emailHint });
+    }
     try {
-      // Basic validation (already done in SignInPage, but good to have defense in depth)
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        throw new Error("Invalid email format provided to signInWithEmail.");
-      }
-      setUserEmail(email);
-      localStorage.setItem('hopeUserEmail', email);
-      // Redirection logic in the useEffect hook will handle navigation.
-      // Typically, after setting userEmail, the effect will push to '/' if on '/signin',
-      // or allow access to '/about-us' from where user can navigate.
+      await signInWithPopup(auth, googleProvider);
+      // onAuthStateChanged will handle setting user and redirecting
     } catch (error) {
-      console.error("Error during signInWithEmail:", error);
+      console.error("-----------------------------------------------------");
+      console.error("Detailed error during signInWithGoogle:", error);
+      
+      let title = "Sign-In Failed";
       let description = "An unexpected error occurred. Please try again.";
-      if (error instanceof Error) {
-         description = error.message;
+
+      if (error instanceof FirebaseError) {
+        console.error("Firebase Error Code:", error.code);
+        console.error("Firebase Error Message:", error.message);
+        if (error.code === 'auth/popup-closed-by-user') {
+          title = "Sign-In Cancelled";
+          description = "The sign-in process was cancelled.";
+        } else if (error.code === 'auth/unauthorized-domain') {
+          title = "Sign-In Error: Unauthorized Domain";
+          description = "This domain is not authorized for Google Sign-In. Please check Firebase console settings for 'localhost' and your production domain. Wait for propagation and try a hard refresh or incognito window. Also verify 'authDomain' in firebase.ts.";
+          toast({ title, description, variant: "destructive", duration: 15000 });
+          setLoading(false);
+          googleProvider.setCustomParameters({}); // Clear custom params
+          throw error;
+        } else {
+          description = `Error: ${error.message} (Code: ${error.code})`;
+        }
+      } else if (error instanceof Error) {
+        console.error("Error Name:", error.name);
+        console.error("Error Message:", error.message);
+        description = error.message;
       }
-      toast({
-        title: "Sign-In Process Error",
-        description: description,
-        variant: "destructive",
-        duration: 9000,
-      });
-      throw error; // Re-throw to be caught by the calling page if needed
+      toast({ title, description, variant: "destructive", duration: 9000 });
     } finally {
       setLoading(false);
+      googleProvider.setCustomParameters({}); // Clear custom params
     }
   };
 
   const signOutUser = async () => {
     setLoading(true);
     try {
-      setUserEmail(null);
-      localStorage.removeItem('hopeUserEmail');
-      router.push('/about-us'); // Redirect to about-us after sign out
+      await signOut(auth);
+      // onAuthStateChanged will handle setting user to null and redirecting
+      router.push('/signin'); 
     } catch (error) {
       console.error("Error signing out: ", error);
       toast({
@@ -107,7 +111,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  if (loading && (pathname === '/signin' || pathname === '/about-us' || pathname === '/')) {
+  // Show global loader for initial auth check or during transitions on sensitive pages
+  if (loading && (pathname === '/' || pathname === '/signin' || pathname === '/about-us')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -120,7 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
   
   return (
-    <AuthContext.Provider value={{ userEmail, loading, signInWithEmail, signOutUser }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOutUser }}>
       {children}
     </AuthContext.Provider>
   );

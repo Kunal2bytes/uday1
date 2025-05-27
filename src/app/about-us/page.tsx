@@ -2,7 +2,7 @@
 // src/app/about-us/page.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,24 +11,24 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'; 
 
 export default function AboutUsPage() {
-  const { userEmail, loading: authLoading } = useAuth(); // userEmail instead of user
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // For the "Got it" button
+
+  // This page is public, AuthProvider handles redirection if a user
+  // tries to access protected routes without auth.
+  // If user is already authenticated, they can still view this page.
 
   const handleGotItClick = async () => {
     setIsProcessing(true);
-    if (userEmail) { // If user is already "signed in" (email exists)
-      router.push('/');
-    } else {
-      // If not "signed in", redirect to the sign-in page to enter email
-      router.push('/signin');
-    }
-    // setIsProcessing(false); // Processing finishes with navigation
+    // If user is authenticated, go to dashboard
+    // If not, clicking "Got it" implies they need to sign in first.
+    // However, the dashboard itself is protected by AuthContext which will redirect to /signin.
+    // So, we can always just try to go to the dashboard.
+    router.push('/');
+    // setIsProcessing(false); // Navigation will occur
   };
   
-  // The main loading spinner is handled by AuthProvider for initial states.
-  // This page can be viewed by anyone.
-
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center p-4 sm:p-6">
       <div className="w-full max-w-3xl">
@@ -115,7 +115,7 @@ export default function AboutUsPage() {
               size="lg" 
               className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3 px-8 rounded-lg shadow-md transition-transform duration-150 hover:scale-105 flex items-center"
               onClick={handleGotItClick}
-              disabled={isProcessing || authLoading}
+              disabled={isProcessing || authLoading} // Disable if auth is loading generally, or this button is processing
             >
               {isProcessing ? (
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -123,7 +123,7 @@ export default function AboutUsPage() {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               ) : <CheckCircle className="mr-2 h-5 w-5" />}
-              {isProcessing ? "Proceeding..." : (userEmail ? "Got it! Let's Go" : "Got it! Proceed to Enter Email")}
+              {isProcessing ? "Proceeding..." : "Got it! Let's Go"}
             </Button>
           </div>
         </div>

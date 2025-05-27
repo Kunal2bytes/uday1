@@ -67,7 +67,7 @@ interface RideWithFirebase extends Omit<Ride, 'createdAt'> {
 
 
 export default function DashboardPage() {
-  const { userEmail, loading: authLoading, signOutUser } = useAuth(); // userEmail instead of user
+  const { user, loading: authLoading, signOutUser } = useAuth();
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
@@ -79,14 +79,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // AuthProvider handles initial redirection logic.
-    // This effect ensures that if userEmail becomes null while on this page, they are redirected.
-    if (!authLoading && !userEmail) {
-      router.push('/about-us'); // Redirect to about-us if not "logged in" (no email)
+    // This effect ensures that if user becomes null while on this page, they are redirected.
+    if (!authLoading && !user) {
+      router.push('/signin'); 
     }
-  }, [userEmail, authLoading, router]);
+  }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (userEmail) { // Fetch rides only if user is "logged in"
+    if (user) { // Fetch rides only if user is logged in
       const fetchRides = async () => {
         setIsLoadingRides(true);
         try {
@@ -111,7 +111,7 @@ export default function DashboardPage() {
       setFilteredRides([]);
       setIsLoadingRides(false);
     }
-  }, [userEmail, toast]); 
+  }, [user, toast]); 
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
@@ -178,7 +178,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading || (!authLoading && !userEmail)) { 
+  if (authLoading || (!authLoading && !user)) { 
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start text-base py-3 px-4 hover:bg-destructive/80 hover:text-destructive-foreground rounded-md flex items-center text-destructive"
-                    onClick={signOutUser} // This will call the new signOutUser
+                    onClick={signOutUser} 
                   >
                     <LogOut className="mr-2 h-5 w-5" />
                     Sign Out
