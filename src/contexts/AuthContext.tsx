@@ -124,7 +124,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  if (!user && pathname !== '/signin' && pathname !== '/terms-and-conditions' && pathname !== '/about-us') {
+  // This check is primarily for when the app first loads and determines auth state.
+  // If user is null and not on an allowed public page, useEffect above will redirect to /signin.
+  // If we are already on /signin, /terms-and-conditions, or /about-us, let it render.
+  const isPublicPage = pathname === '/signin' || pathname === '/terms-and-conditions' || pathname === '/about-us';
+  if (!user && !isPublicPage && !loading) { // Ensure loading is false before this check
+    // The useEffect hook for redirection should handle this, but this is a fallback.
+    // It might show briefly if redirection is slow.
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -150,3 +156,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
