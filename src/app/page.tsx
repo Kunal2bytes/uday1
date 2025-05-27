@@ -1,3 +1,4 @@
+
 // src/app/page.tsx (Dashboard)
 "use client";
 
@@ -25,9 +26,9 @@ import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
-import { useRouter } from "next/navigation"; // Import useRouter
+import { collection, getDocs, query, orderBy, where, Timestamp } from "firebase/firestore";
+import { useAuth } from "@/contexts/AuthContext"; 
+import { useRouter } from "next/navigation"; 
 
 const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; label: string; onClick?: () => void; href?: string }) => {
   const buttonContent = (
@@ -60,35 +61,39 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
   );
 };
 
+interface RideWithFirebase extends Omit<Ride, 'createdAt'> {
+  createdAt: Timestamp; // Specifically use Firebase Timestamp for objects from Firestore
+}
+
+
 export default function DashboardPage() {
-  const { user, loading, signOutUser } = useAuth(); // Get user, loading, and signOutUser
+  const { user, loading: authLoading, signOutUser } = useAuth(); 
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
   const [destinationSearch, setDestinationSearch] = useState("");
-  const [allRidesFromDB, setAllRidesFromDB] = useState<Ride[]>([]);
-  const [filteredRides, setFilteredRides] = useState<Ride[]>([]);
+  const [allRidesFromDB, setAllRidesFromDB] = useState<RideWithFirebase[]>([]);
+  const [filteredRides, setFilteredRides] = useState<RideWithFirebase[]>([]);
   const [isLoadingRides, setIsLoadingRides] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    // AuthProvider handles initial redirection if not logged in.
-    // This effect is mainly to ensure that if the user state changes while on this page,
-    // we react accordingly (e.g., if token expires and user becomes null).
-    if (!loading && !user) {
-      router.push('/signin'); 
+    // AuthProvider handles initial redirection logic.
+    // This effect ensures that if user becomes null while on this page, they are redirected.
+    if (!authLoading && !user) {
+      router.push('/about-us'); // Redirect to about-us if not logged in
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) { // Fetch rides only if user is logged in
+    if (user) { 
       const fetchRides = async () => {
         setIsLoadingRides(true);
         try {
           const ridesCollectionRef = collection(db, "rides");
           const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
           const querySnapshot = await getDocs(q);
-          const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride));
+          const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RideWithFirebase));
           setAllRidesFromDB(ridesData);
         } catch (error) {
           console.error("Error fetching rides from Firestore: ", error);
@@ -102,19 +107,18 @@ export default function DashboardPage() {
       };
       fetchRides();
     } else {
-      // If no user, clear rides and set loading to false
       setAllRidesFromDB([]);
       setFilteredRides([]);
       setIsLoadingRides(false);
     }
-  }, [user, toast]); // Depend on user
+  }, [user, toast]); 
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
     const lowerDestination = destinationSearch.toLowerCase().trim();
 
     if (!lowerOrigin && !lowerDestination) {
-      setFilteredRides([]); // Clear results if search is empty
+      setFilteredRides([]); 
       return;
     }
 
@@ -175,8 +179,8 @@ export default function DashboardPage() {
   };
 
   // AuthProvider shows a global loader.
-  // If loading or if not loading and no user, show specific loading for this page or null.
-  if (loading || (!loading && !user)) { 
+  // If authLoading is true, or if not authLoading AND no user (should be caught by above effect), show minimal UI.
+  if (authLoading || (!authLoading && !user)) { 
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

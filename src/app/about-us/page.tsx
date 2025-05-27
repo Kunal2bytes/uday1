@@ -1,43 +1,52 @@
+
 // src/app/about-us/page.tsx
 "use client";
 
-import React, { useEffect } from 'react'; 
+import React, { useState } from 'react'; // Removed useEffect
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Target, Info, Lightbulb, Search, Bus, CheckCircle } from "lucide-react"; // Removed ChevronLeft
+import { Users, Target, Info, Lightbulb, Search, Bus, CheckCircle } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext'; 
 import { useRouter } from 'next/navigation'; 
 
 export default function AboutUsPage() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle } = useAuth();
   const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(false); // Local loading state for the button action
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/signin'); // Redirect if not logged in
+  // The AuthProvider handles global loading and initial redirection logic.
+  // This page should be viewable whether the user is logged in or not initially.
+
+  const handleGotItClick = async () => {
+    setIsProcessing(true);
+    if (user) {
+      router.push('/');
+    } else {
+      try {
+        await signInWithGoogle();
+        // If signInWithGoogle is successful, user state in AuthContext updates.
+        // AuthContext's useEffect will handle any necessary redirection (e.g., from /signin to /).
+        // We can now safely push to the dashboard.
+        router.push('/');
+      } catch (error) {
+        // signInWithGoogle in AuthContext already shows a toast for errors.
+        console.error("Sign-in attempt from About Us failed:", error);
+        // Stay on About Us page if sign-in fails.
+      }
     }
-  }, [user, loading, router]);
-
-  // AuthProvider shows a global loader.
-  // If loading, or if not loading and no user (should be caught by effect), show minimal UI.
-  if (loading || (!loading && !user)) { 
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-        <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <p className="text-lg">Loading About Us...</p>
-      </div>
-    );
-  }
+    setIsProcessing(false);
+  };
+  
+  // If global auth is loading, AuthProvider shows a global spinner.
+  // So, we don't need a separate loading state for the whole page here.
+  // We just render the content.
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center p-4 sm:p-6">
       <div className="w-full max-w-3xl">
         <header className="mb-8">
-          <div className="flex items-center justify-center sm:justify-start mb-2 pt-8 sm:pt-12"> {/* Added padding top */}
+          <div className="flex items-center justify-center sm:justify-start mb-2 pt-8 sm:pt-12">
             <Info className="h-8 w-8 text-primary mr-3" />
             <h1 className="text-3xl font-bold text-center sm:text-left text-primary">Welcome to HOPE!</h1>
           </div>
@@ -115,11 +124,20 @@ export default function AboutUsPage() {
           </Card>
 
           <div className="flex justify-center mt-10 mb-6">
-            <Link href="/" passHref legacyBehavior>
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3 px-8 rounded-lg shadow-md transition-transform duration-150 hover:scale-105 flex items-center">
-                <CheckCircle className="mr-2 h-5 w-5" /> Got it! Let's Go
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3 px-8 rounded-lg shadow-md transition-transform duration-150 hover:scale-105 flex items-center"
+              onClick={handleGotItClick}
+              disabled={isProcessing || authLoading}
+            >
+              {isProcessing ? (
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : <CheckCircle className="mr-2 h-5 w-5" />}
+              {isProcessing ? (user ? "Proceeding..." : "Signing In...") : "Got it! Let's Go"}
+            </Button>
           </div>
         </div>
       </div>

@@ -36,14 +36,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!loading) {
-      const isAuthPage = pathname === '/signin';
-      const isAboutPage = pathname === '/about-us';
-      const isTermsPage = pathname === '/terms-and-conditions';
+      const isSignInPage = pathname === '/signin';
+      const isPublicInfoPage = pathname === '/terms-and-conditions' || pathname === '/about-us';
 
-      if (!user && !isAuthPage && !isTermsPage) {
-        router.push('/signin');
-      } else if (user && isAuthPage) {
-        router.push('/about-us');
+      if (!user) { // User is not logged in
+        // Allow access to signin, terms, and about-us.
+        // If trying to access any other page, redirect to about-us as the new entry point.
+        if (!isSignInPage && !isPublicInfoPage) {
+          router.push('/about-us');
+        }
+      } else { // User is logged in
+        if (isSignInPage) { // If user is logged in and on signin page (e.g., after successful login navigated by Firebase)
+          router.push('/'); // Redirect to dashboard
+        }
+        // If user is logged in and on /about-us or /terms-and-conditions, or dashboard, let them stay.
+        // Navigation from /about-us to dashboard is handled by its button click.
       }
     }
   }, [user, loading, pathname, router]);
@@ -52,7 +59,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-      // Redirection to /about-us will be handled by the useEffect above after auth state changes
+      // After successful sign-in, the useEffect above will handle redirection if necessary,
+      // or the calling page (e.g., AboutUsPage) can navigate.
     } catch (error) {
       console.error("-----------------------------------------------------");
       console.error("Detailed error during signInWithGoogle:", error);
@@ -66,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (error.code === 'auth/unauthorized-domain') {
           title = "Configuration Issue: Unauthorized Domain";
-          description = "IMPORTANT: Your app's domain (likely 'localhost') is NOT authorized for Google Sign-In in your Firebase project. \n\n1. GO TO: Firebase Console -> project-hope-a64cd -> Authentication -> Settings -> Authorized domains. \n2. ENSURE: 'localhost' is listed (no http://, no port). \n3. VERIFY: Client config in src/lib/firebase.ts has authDomain: 'project-hope-a64cd.firebaseapp.com'. \n4. WAIT: 15-30 mins for settings to propagate. \n5. TRY: Hard refresh (Ctrl+Shift+R) or incognito window.";
+          description = "IMPORTANT: Your app's domain (likely 'localhost') is NOT authorized for Google Sign-In in your Firebase project. \n\n1. GO TO: Firebase Console -> your project -> Authentication -> Settings -> Authorized domains. \n2. ENSURE: 'localhost' is listed (no http://, no port). \n3. VERIFY: Client config in src/lib/firebase.ts has authDomain matching your Firebase project. \n4. WAIT: 15-30 mins for settings to propagate. \n5. TRY: Hard refresh (Ctrl+Shift+R) or incognito window.";
         } else if (error.code === 'auth/popup-closed-by-user') {
           title = "Sign-In Cancelled";
           description = "The sign-in popup was closed before completing. Please try again if you wish to sign in.";
@@ -87,8 +95,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: title,
         description: description,
         variant: "destructive",
-        duration: 15000, // Longer duration for important errors
+        duration: 15000, 
       });
+      throw error; // Re-throw error so calling components can also catch if needed
     } finally {
       setLoading(false);
     }
@@ -98,7 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signOut(auth);
-      router.push('/signin');
+      router.push('/about-us'); // After sign out, go to about-us page
     } catch (error) {
       console.error("Error signing out: ", error);
       toast({
@@ -122,19 +131,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       </div>
     );
   }
-
-  const isPublicPage = pathname === '/signin' || pathname === '/terms-and-conditions' || pathname === '/about-us';
-  if (!user && !isPublicPage && !loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-        <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <p className="text-lg">Please wait...</p>
-      </div>
-    );
-  }
+  
+  // This specific check might be redundant if the useEffect above handles redirection correctly.
+  // const isPublicPage = pathname === '/signin' || pathname === '/terms-and-conditions' || pathname === '/about-us';
+  // if (!user && !isPublicPage && !loading) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
+  //       <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+  //         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+  //         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  //       </svg>
+  //       <p className="text-lg">Please wait...</p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOutUser }}>
