@@ -3,7 +3,7 @@
 
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore'; // Import getFirestore
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -18,17 +18,31 @@ const firebaseConfig = {
 
 // Initialize Firebase
 let app: FirebaseApp;
+
 try {
+  console.log("Attempting to initialize Firebase with config:", firebaseConfig);
   app = initializeApp(firebaseConfig);
+  console.log("Firebase app initialized successfully:", app.name);
 } catch (error) {
-  console.error("Error initializing Firebase app:", error);
-  // Handle the error appropriately in a real app
-  // For now, we'll rethrow or assign a default to prevent further issues during dev
+  console.error("Critical error initializing Firebase app:", error);
+  // In a real app, you might want to display a more user-friendly error message
+  // or prevent the app from proceeding if Firebase is essential.
   throw error; 
 }
 
-const auth: Auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-const db: Firestore = getFirestore(app); // Initialize Firestore and assign to db
+let auth: Auth;
+let googleProvider: GoogleAuthProvider;
+let db: Firestore;
 
-export { app, auth, googleProvider, db }; // Export db
+try {
+  auth = getAuth(app);
+  googleProvider = new GoogleAuthProvider();
+  db = getFirestore(app);
+  console.log("Firebase Auth and Firestore services initialized.");
+} catch (error) {
+  console.error("Error initializing Firebase services (Auth/Firestore):", error);
+  // Handle cases where app might be initialized but services fail
+  throw error;
+}
+
+export { app, auth, googleProvider, db };
