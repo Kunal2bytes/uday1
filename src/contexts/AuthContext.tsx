@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     try {
       await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged will handle setting user and redirecting
+      // onAuthStateChanged will handle setting user and redirecting to /about-us
     } catch (error) {
       console.error("-----------------------------------------------------");
       console.error("Detailed error during signInWithGoogle:", error);
@@ -73,11 +73,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           description = "The sign-in process was cancelled.";
         } else if (error.code === 'auth/unauthorized-domain') {
           title = "Sign-In Error: Unauthorized Domain";
-          description = "This domain is not authorized for Google Sign-In. Please check Firebase console settings for 'localhost' and your production domain. Wait for propagation and try a hard refresh or incognito window. Also verify 'authDomain' in firebase.ts.";
+          description = "This domain is not authorized for Google Sign-In. Please check your Firebase project console settings for 'localhost' and your production domain under Authentication > Settings > Authorized domains. Ensure your client-side `authDomain` in `firebase.ts` is correct. Wait for propagation and try a hard refresh or incognito window.";
           toast({ title, description, variant: "destructive", duration: 15000 });
-          setLoading(false);
-          googleProvider.setCustomParameters({}); // Clear custom params
-          throw error;
         } else {
           description = `Error: ${error.message} (Code: ${error.code})`;
         }
@@ -89,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({ title, description, variant: "destructive", duration: 9000 });
     } finally {
       setLoading(false);
-      googleProvider.setCustomParameters({}); // Clear custom params
+      googleProvider.setCustomParameters({}); // Clear custom params like login_hint
     }
   };
 
@@ -97,8 +94,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signOut(auth);
-      // onAuthStateChanged will handle setting user to null and redirecting
-      router.push('/signin'); 
+      // onAuthStateChanged will handle setting user to null
+      router.push('/signin'); // Redirect to signin page after sign out
     } catch (error) {
       console.error("Error signing out: ", error);
       toast({
