@@ -1,3 +1,4 @@
+
 // src/contexts/AuthContext.tsx
 "use client";
 
@@ -59,13 +60,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       let title = "Sign-In Failed";
       let description = "An unexpected error occurred. Please try again.";
 
-      if (error instanceof FirebaseError) { // Check if it's a FirebaseError
+      if (error instanceof FirebaseError) {
         console.error("Firebase Error Code:", error.code);
         console.error("Firebase Error Message:", error.message);
         
         if (error.code === 'auth/unauthorized-domain') {
           title = "Configuration Issue: Unauthorized Domain";
-          description = "IMPORTANT: Your app's domain (likely 'localhost') is NOT authorized for Google Sign-In in your Firebase project. FIX: Go to Firebase Console -> project-hope-a64cd -> Authentication -> Settings -> Authorized domains -> Add 'localhost'. Wait a few minutes & hard refresh your browser.";
+          description = "IMPORTANT: Your app's domain (likely 'localhost') is NOT authorized for Google Sign-In in your Firebase project. \n\n1. GO TO: Firebase Console -> project-hope-a64cd -> Authentication -> Settings -> Authorized domains. \n2. ENSURE: 'localhost' is listed (no http://, no port). \n3. VERIFY: Client config in src/lib/firebase.ts has authDomain: 'project-hope-a64cd.firebaseapp.com'. \n4. WAIT: 15-30 mins for settings to propagate. \n5. TRY: Hard refresh (Ctrl+Shift+R) or incognito window.";
         } else if (error.code === 'auth/popup-closed-by-user') {
           title = "Sign-In Cancelled";
           description = "The sign-in popup was closed before completing. Please try again if you wish to sign in.";
@@ -87,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: title,
         description: description,
         variant: "destructive",
-        duration: 10000, // Longer duration for important errors
+        duration: 15000, // Longer duration for important errors
       });
     } finally {
       setLoading(false); 
@@ -123,8 +124,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  // This condition helps manage redirection logic more smoothly by showing a loading state
-  // if the user is not authenticated and not on a public page, while AuthProvider effects handle redirection.
   if (!user && pathname !== '/signin' && pathname !== '/terms-and-conditions' && pathname !== '/about-us') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
@@ -137,11 +136,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
   }
   
-  // Allow access to /about-us and /terms-and-conditions even if not logged in (useEffect handles redirection if !user & not these pages)
-  // For /signin, it's the entry point.
-  // For other pages, if user is null, useEffect will redirect.
-  // The AuthProvider's useEffect handles main redirection logic.
-
   return (
     <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOutUser }}>
       {children}
