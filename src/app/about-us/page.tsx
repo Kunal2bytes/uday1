@@ -2,7 +2,7 @@
 // src/app/about-us/page.tsx
 "use client";
 
-import React, { useState } from 'react'; // Removed useEffect
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,36 +11,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'; 
 
 export default function AboutUsPage() {
-  const { user, loading: authLoading, signInWithGoogle } = useAuth();
+  const { userEmail, loading: authLoading } = useAuth(); // userEmail instead of user
   const router = useRouter();
-  const [isProcessing, setIsProcessing] = useState(false); // Local loading state for the button action
-
-  // The AuthProvider handles global loading and initial redirection logic.
-  // This page should be viewable whether the user is logged in or not initially.
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleGotItClick = async () => {
     setIsProcessing(true);
-    if (user) {
+    if (userEmail) { // If user is already "signed in" (email exists)
       router.push('/');
     } else {
-      try {
-        await signInWithGoogle();
-        // If signInWithGoogle is successful, user state in AuthContext updates.
-        // AuthContext's useEffect will handle any necessary redirection (e.g., from /signin to /).
-        // We can now safely push to the dashboard.
-        router.push('/');
-      } catch (error) {
-        // signInWithGoogle in AuthContext already shows a toast for errors.
-        console.error("Sign-in attempt from About Us failed:", error);
-        // Stay on About Us page if sign-in fails.
-      }
+      // If not "signed in", redirect to the sign-in page to enter email
+      router.push('/signin');
     }
-    setIsProcessing(false);
+    // setIsProcessing(false); // Processing finishes with navigation
   };
   
-  // If global auth is loading, AuthProvider shows a global spinner.
-  // So, we don't need a separate loading state for the whole page here.
-  // We just render the content.
+  // The main loading spinner is handled by AuthProvider for initial states.
+  // This page can be viewed by anyone.
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center p-4 sm:p-6">
@@ -136,7 +123,7 @@ export default function AboutUsPage() {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               ) : <CheckCircle className="mr-2 h-5 w-5" />}
-              {isProcessing ? (user ? "Proceeding..." : "Signing In...") : "Got it! Let's Go"}
+              {isProcessing ? "Proceeding..." : (userEmail ? "Got it! Let's Go" : "Got it! Proceed to Enter Email")}
             </Button>
           </div>
         </div>
