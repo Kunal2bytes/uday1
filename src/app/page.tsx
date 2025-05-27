@@ -22,7 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Ride } from '@/lib/mockData'; 
-// import { mockRides } from '@/lib/mockData'; // Removed as mockRides is no longer exported
+// import { mockRides } from '@/lib/mockData'; // This line was already commented or removed for Firestore integration
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 
@@ -91,6 +91,32 @@ export default function DashboardPage() {
     console.log(`Booking ride with ${ride.name} (ID: ${ride.id}) - Check browser console for this message.`);
   };
 
+  const handleShareApp = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Share HOPE App',
+          text: 'Check out HOPE - a modern transportation app for ride-sharing and booking!',
+          url: window.location.href,
+        });
+        console.log('App shared successfully');
+      } catch (error) {
+        console.error('Error sharing app:', error);
+        toast({
+          title: "Sharing Failed",
+          description: "Could not share the app at this moment.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      toast({
+        title: "Sharing Not Supported",
+        description: "Your browser does not support the Web Share API. You can copy the URL from the address bar.",
+        variant: "default",
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center">
       <div className="w-full max-w-lg">
@@ -128,6 +154,14 @@ export default function DashboardPage() {
                   </Link>
                   <Button variant="ghost" className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md">
                     Your Rides
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md"
+                    onClick={handleShareApp}
+                  >
+                    <Share2 className="mr-2 h-5 w-5" />
+                    Share this App
                   </Button>
                 </nav>
               </SheetContent>
@@ -259,4 +293,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
