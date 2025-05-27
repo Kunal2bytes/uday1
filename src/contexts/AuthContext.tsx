@@ -2,10 +2,11 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, signOut, AuthError } from 'firebase/auth'; // Import AuthError
 import { auth, googleProvider } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button'; // For loading screen
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast(); // Initialize toast
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -37,14 +39,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const isTermsPage = pathname === '/terms-and-conditions'; // Allow unauthenticated access to terms
 
       if (!user && !isAuthPage && !isTermsPage) { 
-        // If not logged in and not on signin or terms page, redirect to signin
         router.push('/signin');
       } else if (user && isAuthPage) {
-        // If logged in and on signin page, redirect to about-us (onboarding step)
         router.push('/about-us');
       }
-      // If user is logged in, and on /about-us, let them be.
-      // If user is logged in, and on any other page (e.g. /), let them be.
     }
   }, [user, loading, pathname, router]);
 
@@ -56,24 +54,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("-----------------------------------------------------");
       console.error("Detailed error during signInWithGoogle:", error);
+      
+      let title = "Sign-In Failed";
+      let description = "An unexpected error occurred. Please try again.";
+
       if (error instanceof Error) {
-        console.error("Error Name:", error.name);
-        console.error("Error Message:", error.message);
-        // FirebaseError often has a 'code' property
-        const firebaseError = error as any; // Use type assertion cautiously
+        const firebaseError = error as AuthError; // Type assertion to AuthError
+        console.error("Error Name:", firebaseError.name);
+        console.error("Error Message:", firebaseError.message);
         if (firebaseError.code) {
           console.error("Firebase Error Code:", firebaseError.code);
+          if (firebaseError.code === 'auth/unauthorized-domain') {
+            title = "Unauthorized Domain";
+            description = "This domain is not authorized for Google Sign-In. Please check your Firebase project settings and add 'localhost' (and your production domain) to the authorized domains list for Authentication.";
+          } else if (firebaseError.code === 'auth/popup-closed-by-user') {
+            title = "Sign-In Cancelled";
+            description = "The sign-in popup was closed before completing. Please try again if you wish to sign in.";
+          } else if (firebaseError.code === 'auth/cancelled-popup-request') {
+            title = "Sign-In Cancelled";
+            description = "Multiple sign-in popups were opened. The request was cancelled. Please try again.";
+          } else {
+            description = `Error: ${firebaseError.message} (Code: ${firebaseError.code})`;
+          }
         }
-        if (firebaseError.customData) {
-          console.error("Firebase Custom Data:", firebaseError.customData);
+        if ((firebaseError as any).customData) { // Keep customData logging if it exists
+          console.error("Firebase Custom Data:", (firebaseError as any).customData);
         }
-        if (error.stack) {
-          console.error("Error Stack:", error.stack);
+        if (firebaseError.stack) {
+          console.error("Error Stack:", firebaseError.stack);
         }
       }
       console.error("-----------------------------------------------------");
-      // Handle error (e.g., show toast) - A toast for auth/unauthorized-domain might also be helpful
-      setLoading(false); // Reset loading on error
+      
+      toast({
+        title: title,
+        description: description,
+        variant: "destructive",
+        duration: 9000, // Longer duration for important errors
+      });
+      setLoading(false); 
     }
   };
 
@@ -81,11 +100,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signOut(auth);
-      router.push('/signin'); // Redirect to signin page after signout
+      router.push('/signin'); 
     } catch (error) {
       console.error("Error signing out: ", error);
-      // Handle error
-      setLoading(false); // Reset loading on error
+      toast({
+        title: "Sign-Out Failed",
+        description: "Could not sign out. Please try again.",
+        variant: "destructive",
+      });
+      setLoading(false); 
     }
   };
   
@@ -101,11 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  // This logic ensures that unauthenticated users only see /signin or /terms-and-conditions
-  // Authenticated users can see any page (further redirection like /signin -> /about-us is handled by the effect hook)
   if (!user && pathname !== '/signin' && pathname !== '/terms-and-conditions') {
-    // This is a fallback state during redirection.
-    // The useEffect hook should handle the actual redirection.
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -116,7 +135,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       </div>
     );
   }
-
 
   return (
     <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOutUser }}>
