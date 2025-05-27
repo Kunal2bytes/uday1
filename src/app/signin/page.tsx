@@ -4,6 +4,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -21,6 +23,7 @@ export default function SignInPage() {
   const { signInWithGoogle, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [email, setEmail] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
@@ -33,20 +36,37 @@ export default function SignInPage() {
   }, [user, authLoading, router]);
 
   const handleSignIn = async () => {
+    if (!email.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your Gmail address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Basic email validation (can be more robust)
+    if (!/\S+@\S+\.\S+/.test(email)) {
+        toast({
+            title: "Invalid Email",
+            description: "Please enter a valid email address.",
+            variant: "destructive",
+        });
+        return;
+    }
+
     setIsProcessing(true);
     try {
-      await signInWithGoogle();
-      // On success, AuthContext will handle redirection.
+      await signInWithGoogle(email); // Pass email as a hint
+      // On success, AuthContext will handle redirection via its useEffect.
     } catch (error) {
       // Error is already handled and toasted in AuthContext's signInWithGoogle
-      // No need to re-toast here unless for a very specific UI update on this page
       console.error("Sign-in attempt from SignInPage failed, error handled by AuthContext:", error);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (authLoading && !user) {
+  if (authLoading && !user) { // Show loader if auth is loading and no user yet
      return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -57,7 +77,9 @@ export default function SignInPage() {
       </div>
     );
   }
-
+  
+  // If user is already logged in and auth is not loading, AuthContext effect should redirect.
+  // This return is for when user is not logged in and auth is not loading.
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-primary/10 p-6">
       <div className="w-full max-w-md text-center">
@@ -71,8 +93,21 @@ export default function SignInPage() {
         </p>
         
         <div className="bg-card p-8 rounded-xl shadow-2xl space-y-6">
-          <h2 className="text-2xl font-semibold text-card-foreground">Join HOPE</h2>
+          <h2 className="text-2xl font-semibold text-card-foreground">Sign In or Create Account</h2>
           
+          <div className="space-y-2 text-left">
+            <Label htmlFor="email-input" className="text-sm font-medium text-muted-foreground">Enter your Gmail</Label>
+            <Input
+              id="email-input"
+              type="email"
+              placeholder="example@gmail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-input border-border placeholder:text-muted-foreground text-foreground rounded-lg"
+              disabled={isProcessing || authLoading}
+            />
+          </div>
+
           <Button 
             onClick={handleSignIn} 
             className="w-full py-3 text-base bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md transition-transform duration-150 hover:scale-105 flex items-center justify-center"
@@ -80,7 +115,7 @@ export default function SignInPage() {
             size="lg"
           >
             <GoogleIcon />
-            <span className="ml-2">{isProcessing ? "Processing..." : "Sign In with Google"}</span>
+            <span className="ml-2">{isProcessing ? "Processing..." : "Continue with Google"}</span>
           </Button>
           <p className="text-xs text-muted-foreground mt-6">
             By proceeding, you agree to our <Link href="/terms-and-conditions" className="underline hover:text-primary">Terms of Service</Link>.
