@@ -11,7 +11,7 @@ import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, Timestamp } from "firebase/firestore"; // Ensure Timestamp is imported if Ride uses it
 
 const PageVehicleIcon = BikeIcon;
 const pageTitle = "Available Bikes";
@@ -89,7 +89,7 @@ export default function BookBikePage() {
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm flex-grow">
                   <div className="flex items-center">
-                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" /> 
+                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Time:</span>&nbsp;{formatTimeTo12Hour(ride.timeToGo)}
                   </div>
                   <div className="flex items-center">
@@ -116,8 +116,8 @@ export default function BookBikePage() {
                   )}
                 </CardContent>
                 <CardFooter className="pt-3">
-                  <Button 
-                    onClick={() => handleBookRide(ride)} 
+                  <Button
+                    onClick={() => handleBookRide(ride)}
                     className="w-full"
                     size="sm"
                   >

@@ -11,7 +11,7 @@ import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, Timestamp } from "firebase/firestore"; // Ensure Timestamp is imported
 
 const PageVehicleIcon = AutoIcon;
 const pageTitle = "Available Autos";
@@ -27,8 +27,6 @@ export default function BookAutoPage() {
       setIsLoading(true);
       try {
         const ridesRef = collection(db, "rides");
-        // The distanceKm filter is removed for now as ShareRideForm doesn't collect it.
-        // We can add a mechanism to collect/calculate distance later if needed.
         const q = query(ridesRef, where("vehicle", "==", vehicleType), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride));
@@ -87,13 +85,11 @@ export default function BookAutoPage() {
                   </CardTitle>
                   <CardDescription className="text-xs">
                     Vehicle: {ride.vehicle} | Driver's Gender: {ride.gender}
-                    {/* Removed distanceKm display as it's not consistently available 
-                    {ride.distanceKm !== undefined && ` | Distance: ${ride.distanceKm}km`} */}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm flex-grow">
                   <div className="flex items-center">
-                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" /> 
+                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Time:</span>&nbsp;{formatTimeTo12Hour(ride.timeToGo)}
                   </div>
                   <div className="flex items-center">
@@ -120,8 +116,8 @@ export default function BookAutoPage() {
                   )}
                 </CardContent>
                 <CardFooter className="pt-3">
-                  <Button 
-                    onClick={() => handleBookRide(ride)} 
+                  <Button
+                    onClick={() => handleBookRide(ride)}
                     className="w-full"
                     size="sm"
                   >

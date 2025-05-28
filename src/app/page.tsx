@@ -22,13 +22,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Ride } from '@/lib/mockData'; 
+import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, where, Timestamp } from "firebase/firestore";
-import { useAuth } from "@/contexts/AuthContext"; 
-import { useRouter } from "next/navigation"; 
+import { collection, getDocs, query, orderBy, where, Timestamp } from "firebase/firestore"; // Timestamp imported
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; label: string; onClick?: () => void; href?: string }) => {
   const buttonContent = (
@@ -61,39 +61,32 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
   );
 };
 
-interface RideWithFirebase extends Omit<Ride, 'createdAt'> {
-  createdAt: Timestamp; 
-}
-
-
 export default function DashboardPage() {
   const { user, loading: authLoading, signOutUser } = useAuth();
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
   const [destinationSearch, setDestinationSearch] = useState("");
-  const [allRidesFromDB, setAllRidesFromDB] = useState<RideWithFirebase[]>([]);
-  const [filteredRides, setFilteredRides] = useState<RideWithFirebase[]>([]);
+  const [allRidesFromDB, setAllRidesFromDB] = useState<Ride[]>([]); // Use Ride type
+  const [filteredRides, setFilteredRides] = useState<Ride[]>([]);   // Use Ride type
   const [isLoadingRides, setIsLoadingRides] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    // AuthProvider handles initial redirection logic.
-    // This effect ensures that if user becomes null while on this page, they are redirected.
     if (!authLoading && !user) {
-      router.push('/signin'); 
+      router.push('/about-us');
     }
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) { 
+    if (user) {
       const fetchRides = async () => {
         setIsLoadingRides(true);
         try {
           const ridesCollectionRef = collection(db, "rides");
           const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
           const querySnapshot = await getDocs(q);
-          const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RideWithFirebase));
+          const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride)); // Cast to Ride
           setAllRidesFromDB(ridesData);
         } catch (error) {
           console.error("Error fetching rides from Firestore: ", error);
@@ -111,29 +104,29 @@ export default function DashboardPage() {
       setFilteredRides([]);
       setIsLoadingRides(false);
     }
-  }, [user, toast]); 
+  }, [user, toast]);
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
     const lowerDestination = destinationSearch.toLowerCase().trim();
 
     if (!lowerOrigin && !lowerDestination) {
-      setFilteredRides([]); 
+      setFilteredRides([]);
       return;
     }
 
     const results = allRidesFromDB.filter(ride => {
       const rideOriginLower = ride.origin.toLowerCase();
       const rideDestinationLower = ride.destination.toLowerCase();
-      
+
       const originMatch = lowerOrigin ? rideOriginLower.includes(lowerOrigin) : true;
       const destinationMatch = lowerDestination ? rideDestinationLower.includes(lowerDestination) : true;
-      
+
       return originMatch && destinationMatch;
     });
     setFilteredRides(results);
 
-  }, [originSearch, destinationSearch, allRidesFromDB]); 
+  }, [originSearch, destinationSearch, allRidesFromDB]);
 
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
@@ -178,7 +171,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading || (!authLoading && !user)) { 
+  if (authLoading || (!authLoading && !user)) {
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -193,7 +186,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center">
       <div className="w-full max-w-lg">
-        
+
         <header className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-sm border-b border-border/40">
           <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
             <Sheet>
@@ -208,8 +201,8 @@ export default function DashboardPage() {
                 </SheetHeader>
                 <nav className="flex flex-col space-y-3">
                   <Link href="/terms-and-conditions" passHref legacyBehavior>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md"
                       asChild
                     >
@@ -217,8 +210,8 @@ export default function DashboardPage() {
                     </Button>
                   </Link>
                   <Link href="/about-us" passHref legacyBehavior>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md"
                       asChild
                     >
@@ -228,18 +221,18 @@ export default function DashboardPage() {
                   <Button variant="ghost" className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md">
                     Your Rides
                   </Button>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md flex items-center"
                     onClick={handleShareApp}
                   >
                     <Share2 className="mr-2 h-5 w-5" />
                     Share this App
                   </Button>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full justify-start text-base py-3 px-4 hover:bg-destructive/80 hover:text-destructive-foreground rounded-md flex items-center text-destructive"
-                    onClick={signOutUser} 
+                    onClick={signOutUser}
                   >
                     <LogOut className="mr-2 h-5 w-5" />
                     Sign Out
@@ -247,7 +240,7 @@ export default function DashboardPage() {
                 </nav>
               </SheetContent>
             </Sheet>
-            
+
             <h1 className="text-xl font-bold mx-auto text-foreground">HOPE</h1>
 
             <div className="flex items-center justify-end ml-2 sm:ml-0">
@@ -309,7 +302,7 @@ export default function DashboardPage() {
                       </CardHeader>
                       <CardContent className="space-y-1.5 text-sm flex-grow">
                         <div className="flex items-center">
-                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" /> 
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">Time:</span>&nbsp;{formatTimeTo12Hour(ride.timeToGo)}
                         </div>
                         <div className="flex items-center">
@@ -331,8 +324,8 @@ export default function DashboardPage() {
                         )}
                       </CardContent>
                       <CardFooter className="pt-3">
-                        <Button 
-                          onClick={() => handleBookRide(ride)} 
+                        <Button
+                          onClick={() => handleBookRide(ride)}
                           className="w-full"
                           size="sm"
                         >
