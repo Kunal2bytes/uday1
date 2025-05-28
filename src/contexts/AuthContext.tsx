@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase'; 
+import { auth } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseError } from 'firebase/app';
 
@@ -18,7 +18,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const DUMMY_PASSWORD = "dummyPrototypePassword!123";
+const DUMMY_PASSWORD = "dummyPrototypePassword!123"; // For prototype purposes only
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -42,11 +42,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!user) { // Not logged in
         if (!isPublicPage && !isSignInPage) {
-          router.push('/signin'); 
+          router.push('/signin');
         }
       } else { // Logged in
         if (isSignInPage) {
-          router.push('/about-us'); 
+          router.push('/about-us'); // After sign-in, go to about-us
         }
       }
     }
@@ -59,14 +59,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({ title: "Welcome Back!", description: "Signed in successfully." });
     } catch (error) {
       if (error instanceof FirebaseError) {
-        if (error.code === 'auth/user-not-found') {
+        // If user not found OR invalid-credential (which might sometimes mean user not found or other issues), try creating account
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+          console.log(`Sign-in failed with ${error.code} for ${email}, attempting to create user.`);
           try {
             await createUserWithEmailAndPassword(auth, email, DUMMY_PASSWORD);
             toast({ title: "Account Created!", description: "Welcome to HOPE!" });
           } catch (creationError) {
             console.error("Error creating user:", creationError);
             if (creationError instanceof FirebaseError) {
-              toast({ title: "Account Creation Failed", description: creationError.message, variant: "destructive" });
+              if (creationError.code === 'auth/email-already-in-use') {
+                toast({
+                  title: "Registration Failed",
+                  description: "This email is already registered or linked to an existing account. Please try signing in or use a different email.",
+                  variant: "destructive",
+                  duration: 7000,
+                });
+              } else if (creationError.code === 'auth/invalid-email') {
+                 toast({ title: "Account Creation Failed", description: "The email address is badly formatted.", variant: "destructive" });
+              }
+              else {
+                toast({ title: "Account Creation Failed", description: creationError.message, variant: "destructive" });
+              }
             } else {
               toast({ title: "Account Creation Failed", description: "An unknown error occurred during account creation.", variant: "destructive" });
             }
@@ -75,12 +89,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           toast({ title: "Sign-In Failed", description: "Incorrect credentials. If you previously used a different sign-in method, please try that or contact support.", variant: "destructive" });
           console.error("Sign-in failed (wrong-password):", error);
         } else if (error.code === 'auth/invalid-email') {
-          toast({ title: "Invalid Email", description: "The email address you entered is not valid. Please check and try again.", variant: "destructive" });
-          console.error("Sign-in error (invalid-email):", error);
-        } else if (error.code === 'auth/invalid-credential') {
-          toast({ title: "Sign-In Failed", description: "Invalid credentials provided. Please ensure your email is correct and try again. If the issue persists, your account might be disabled or require a different sign-in method.", variant: "destructive" });
-          console.error("Sign-in error (invalid-credential):", error);
-        } else {
+           toast({ title: "Invalid Email", description: "The email address you entered is not valid. Please check and try again.", variant: "destructive" });
+           console.error("Sign-in error (invalid-email):", error);
+        }
+        // Note: The original 'auth/invalid-credential' toast for direct sign-in failure is now covered by the creation attempt.
+        // If creation also fails (e.g. email-already-in-use), that specific error is shown.
+        else {
           toast({ title: "Sign-In Error", description: error.message, variant: "destructive" });
           console.error("Sign-in error:", error);
         }
@@ -97,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await firebaseSignOut(auth);
-      router.push('/signin'); 
+      router.push('/signin');
     } catch (error) {
       console.error("Error signing out: ", error);
       toast({
@@ -109,11 +123,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     }
   };
-  
-  // Global loading screen for initial auth check on critical paths
+
   if (loading && (pathname !== '/about-us' && pathname !== '/terms-and-conditions')) {
     const isPotentiallyProtected = !['/about-us', '/terms-and-conditions', '/signin'].includes(pathname);
-    if (isPotentiallyProtected || (pathname === '/signin' && !user)) { // Show loader if on signin and not yet determined user, or on protected if not public
+     if (isPotentiallyProtected || (pathname === '/signin' && !user)) {
         return (
           <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
             <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -125,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         );
     }
   }
-  
+
   return (
     <AuthContext.Provider value={{ user, loading, signInOrUpWithEmailAndDummyPassword, signOutUser }}>
       {children}
