@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ChevronLeft, MapPin, Clock, ListChecks, BusFront, Search } from "lucide-react";
-import type { BusRoute } from '@/lib/mockData';
-import { mockBusRoutes } from '@/lib/mockData';
+import type { BusRoute } from '@/lib/mockData'; // BusRoute interface will be used
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,9 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BusSchedulesPage() {
-  const [allRoutes] = useState<BusRoute[]>([...mockBusRoutes]); // Use a copy
+  const [allRoutesFromDB, setAllRoutesFromDB] = useState<BusRoute[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
   const [states, setStates] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
 
@@ -32,15 +37,37 @@ export default function BusSchedulesPage() {
   const [filtersApplied, setFiltersApplied] = useState<boolean>(false);
 
   useEffect(() => {
-    const uniqueStates = Array.from(new Set(allRoutes.map(route => route.state))).sort();
-    setStates(uniqueStates);
-  }, [allRoutes]);
+    const fetchBusRoutes = async () => {
+      setIsLoading(true);
+      try {
+        const routesRef = collection(db, "busRoutes");
+        const q = query(routesRef, orderBy("createdAt", "desc")); // Order by most recent
+        const querySnapshot = await getDocs(q);
+        const routesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BusRoute));
+        setAllRoutesFromDB(routesData);
+      } catch (error) {
+        console.error("Error fetching bus routes from Firestore:", error);
+        toast({ title: "Error", description: "Could not fetch bus routes.", variant: "destructive" });
+      }
+      setIsLoading(false);
+    };
+    fetchBusRoutes();
+  }, [toast]);
+
+  useEffect(() => {
+    if (allRoutesFromDB.length > 0) {
+      const uniqueStates = Array.from(new Set(allRoutesFromDB.map(route => route.state))).sort();
+      setStates(uniqueStates);
+    } else {
+      setStates([]);
+    }
+  }, [allRoutesFromDB]);
 
   useEffect(() => {
     if (selectedState) {
       const uniqueDistricts = Array.from(
         new Set(
-          allRoutes
+          allRoutesFromDB
             .filter(route => route.state === selectedState)
             .map(route => route.district)
         )
@@ -49,18 +76,18 @@ export default function BusSchedulesPage() {
     } else {
       setDistricts([]);
     }
-    setSelectedDistrict(""); // Reset district when state changes
-  }, [selectedState, allRoutes]);
+    setSelectedDistrict(""); 
+  }, [selectedState, allRoutesFromDB]);
 
   useEffect(() => {
-    if (!selectedState && !selectedDistrict && !cityQuery) {
+    if (!selectedState && !selectedDistrict && !cityQuery.trim()) {
       setDisplayRoutes([]);
       setFiltersApplied(false);
       return;
     }
 
     setFiltersApplied(true);
-    let filtered = [...allRoutes];
+    let filtered = [...allRoutesFromDB];
 
     if (selectedState) {
       filtered = filtered.filter(route => route.state === selectedState);
@@ -68,13 +95,13 @@ export default function BusSchedulesPage() {
     if (selectedDistrict) {
       filtered = filtered.filter(route => route.district === selectedDistrict);
     }
-    if (cityQuery) {
+    if (cityQuery.trim()) {
       filtered = filtered.filter(route =>
-        route.city.toLowerCase().includes(cityQuery.toLowerCase())
+        route.city.toLowerCase().includes(cityQuery.trim().toLowerCase())
       );
     }
     setDisplayRoutes(filtered);
-  }, [selectedState, selectedDistrict, cityQuery, allRoutes]);
+  }, [selectedState, selectedDistrict, cityQuery, allRoutesFromDB]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center p-4 sm:p-6">
@@ -143,15 +170,21 @@ export default function BusSchedulesPage() {
           </CardContent>
         </Card>
 
-        {!filtersApplied && (
+        {isLoading ? (
+          <div className="text-center py-10">
+            <svg className="animate-spin h-8 w-8 text-primary mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-muted-foreground">Loading bus routes...</p>
+          </div>
+        ) : !filtersApplied && allRoutesFromDB.length > 0 ? (
           <div className="text-center py-10 bg-card rounded-lg shadow">
             <ListChecks className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-muted-foreground">Please use the filters above to find bus routes.</p>
             <p className="text-sm text-muted-foreground">Select a state to begin.</p>
           </div>
-        )}
-
-        {filtersApplied && displayRoutes.length > 0 && (
+        ) : filtersApplied && displayRoutes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {displayRoutes.map((route) => (
               <Card key={route.id} className="shadow-md hover:shadow-lg transition-shadow duration-200 bg-card text-card-foreground rounded-lg overflow-hidden flex flex-col">
@@ -191,13 +224,15 @@ export default function BusSchedulesPage() {
               </Card>
             ))}
           </div>
-        )}
-
-        {filtersApplied && displayRoutes.length === 0 && (
+        ) : ( // Covers all other cases: (isLoading=false AND filtersApplied AND displayRoutes.length === 0) OR (isLoading=false AND allRoutesFromDB.length === 0)
           <div className="text-center py-10 bg-card rounded-lg shadow">
             <Search className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-            <p className="text-xl font-semibold text-muted-foreground">No bus schedules found matching your criteria.</p>
-            <p className="text-sm text-muted-foreground">Try adjusting your filters or ask a conductor to share a route for this area.</p>
+            <p className="text-xl font-semibold text-muted-foreground">
+              {allRoutesFromDB.length === 0 && !filtersApplied ? "No bus routes have been shared yet." : "No bus schedules found matching your criteria."}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {allRoutesFromDB.length === 0 && !filtersApplied ? "Be the first to share a route!" : "Try adjusting your filters or ask a conductor to share a route for this area."}
+            </p>
           </div>
         )}
       </div>
