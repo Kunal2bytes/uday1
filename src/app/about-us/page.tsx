@@ -11,21 +11,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'; 
 
 export default function AboutUsPage() {
-  const { userEmail, loading: authLoading } = useAuth(); // Using userEmail now
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
 
   // This page is public. AuthProvider handles redirection if a user
-  // tries to access protected routes without an email set.
+  // tries to access protected routes without being authenticated.
 
   const handleGotItClick = async () => {
     setIsProcessing(true);
-    if (userEmail) {
-      // If email is already set (user is "signed in"), go to dashboard
+    if (user) {
+      // If user is already authenticated, go to dashboard
       router.push('/');
     } else {
-      // If no email, direct to signin page to enter email
-      router.push('/signin');
+      // This case should ideally not be hit if AuthContext redirects correctly,
+      // but as a fallback, send to signin.
+      // Or, if the design intends "About Us" to be the entry point before any auth attempt:
+      router.push('/signin'); // Redirect to signin if not authenticated
     }
     // setIsProcessing(false); // Navigation will occur
   };

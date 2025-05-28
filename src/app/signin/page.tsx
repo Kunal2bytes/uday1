@@ -10,21 +10,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
-import { LogIn } from 'lucide-react'; // Using a generic LogIn icon
+import { LogIn } from 'lucide-react';
 
 export default function SignInPage() {
-  const { signInWithEnteredEmail, userEmail, loading: authLoading } = useAuth();
+  const { signInOrUpWithEmailAndDummyPassword, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // If userEmail is already set (e.g., from localStorage) and not loading, redirect to dashboard
-    if (!authLoading && userEmail) {
-      router.push('/');
+    if (!authLoading && user) {
+      router.push('/about-us'); // If user is already authenticated, redirect to about-us
     }
-  }, [userEmail, authLoading, router]);
+  }, [user, authLoading, router]);
 
   const handleSignIn = async () => {
     if (!email.trim()) {
@@ -46,17 +45,18 @@ export default function SignInPage() {
 
     setIsProcessing(true);
     try {
-      await signInWithEnteredEmail(email);
-      // On success, AuthContext will set userEmail and redirect via its useEffect or signInWithEnteredEmail itself
+      await signInOrUpWithEmailAndDummyPassword(email);
+      // On success, AuthContext's onAuthStateChanged will update user state 
+      // and its useEffect will handle redirection to /about-us
     } catch (error) {
-      // Error is already handled and toasted in AuthContext's signInWithEnteredEmail
+      // Error is already handled and toasted in AuthContext's signInOrUpWithEmailAndDummyPassword
       console.error("Sign-in attempt from SignInPage failed, error handled by AuthContext:", error);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (authLoading && !userEmail) { 
+  if (authLoading && !user) { 
      return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
