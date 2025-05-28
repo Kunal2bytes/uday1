@@ -12,8 +12,8 @@ export interface Ride {
   gender: "male" | "female" | "other";
   seatingCapacity: number; // Total capacity including driver
   contactNumber?: string;
-  distanceKm?: number;
-  createdAt?: Timestamp; // For Firestore serverTimestamp, updated from any
+  distanceKm?: number; // Optional: Only relevant for auto pre-filtering if re-implemented
+  createdAt?: Timestamp; // For Firestore serverTimestamp
 }
 
 // --- Bus Route Data ---
@@ -33,36 +33,21 @@ export interface BusRoute {
   createdAt?: Timestamp; // For Firestore serverTimestamp
 }
 
-// This array will store shared bus routes.
-// Exported as `let` to allow modification by the form for demo purposes.
-// This will also be moved to Firestore in a future step.
-export let mockBusRoutes: BusRoute[] = [
-    {
-    id: "br1",
-    state: "California",
-    district: "Los Angeles County",
-    city: "Los Angeles",
-    routeNameOrNumber: "Route 66 Express",
-    busNumber: "B-101",
-    stops: [
-      { stopName: "Downtown LA", scheduledTime: "08:00" },
-      { stopName: "Hollywood", scheduledTime: "08:30" },
-      { stopName: "Santa Monica Pier", scheduledTime: "09:15" },
-    ],
-    createdAt: undefined, // Or an actual Timestamp if needed for mock
-  },
-  {
-    id: "br2",
-    state: "New York",
-    district: "New York County",
-    city: "New York City",
-    routeNameOrNumber: "Crosstown M57",
-    busNumber: "B-202",
-    stops: [
-      { stopName: "72nd St & Broadway", scheduledTime: "10:00" },
-      { stopName: "5th Ave & 57th St", scheduledTime: "10:20" },
-      { stopName: "1st Ave & 57th St", scheduledTime: "10:45" },
-    ],
-    createdAt: undefined, // Or an actual Timestamp if needed for mock
-  },
-];
+// mockBusRoutes array is removed as data will now be fetched from Firestore.
+// Example structure (for reference, not used in code anymore):
+// export let mockBusRoutes: BusRoute[] = [
+//     {
+//     id: "br1",
+//     state: "California",
+//     district: "Los Angeles County",
+//     city: "Los Angeles",
+//     routeNameOrNumber: "Route 66 Express",
+//     busNumber: "B-101",
+//     stops: [
+//       { stopName: "Downtown LA", scheduledTime: "08:00" },
+//       { stopName: "Hollywood", scheduledTime: "08:30" },
+//       { stopName: "Santa Monica Pier", scheduledTime: "09:15" },
+//     ],
+//     createdAt: undefined, 
+//   },
+// ];

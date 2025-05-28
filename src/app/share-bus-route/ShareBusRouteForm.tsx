@@ -17,9 +17,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import React from "react";
-import { PlusCircle, Trash2 } from "lucide-react";
-import { mockBusRoutes } from "@/lib/mockData"; // Import the mock data array
+import React, { useState } from "react";
+import { PlusCircle, Trash2, CheckCircle } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const stopSchema = z.object({
   stopName: z.string().min(1, "Stop name is required."),
@@ -31,7 +32,7 @@ const formSchema = z.object({
   district: z.string().min(2, "District name must be at least 2 characters."),
   city: z.string().min(2, "City name must be at least 2 characters."),
   routeNameOrNumber: z.string().min(1, "Route name or number is required."),
-  busNumber: z.string().optional(), // Optional bus number
+  busNumber: z.string().optional(),
   stops: z.array(stopSchema).min(1, "At least one stop is required."),
 });
 
@@ -39,6 +40,7 @@ export type ShareBusRouteFormValues = z.infer<typeof formSchema>;
 
 export function ShareBusRouteForm() {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<ShareBusRouteFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,25 +54,50 @@ export function ShareBusRouteForm() {
   });
 
   const { fields, append, remove } = useFieldArray({
-    control: form.control as Control<ShareBusRouteFormValues>, // Type assertion
+    control: form.control as Control<ShareBusRouteFormValues>, 
     name: "stops",
   });
 
-  function onSubmit(data: ShareBusRouteFormValues) {
-    console.log("Bus route data:", data);
-    // For demo purposes, add to the mockBusRoutes array
-    const newRouteId = `br${Date.now()}`; // Simple unique ID
-    mockBusRoutes.push({ id: newRouteId, ...data });
-    
-    toast({
-      title: "Bus Route Shared Successfully!",
-      description: "The bus route details have been submitted.",
-      variant: "default",
-    });
-    form.reset();
-     // Ensure at least one stop field is present after reset
-    if (fields.length === 0) {
+  async function onSubmit(data: ShareBusRouteFormValues) {
+    setIsSubmitting(true);
+    console.log("Submitting bus route data to Firestore:", data);
+
+    const newBusRoutePayload = {
+      ...data,
+      createdAt: serverTimestamp(),
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, "busRoutes"), newBusRoutePayload);
+      console.log("Bus route added to Firestore with ID: ", docRef.id);
+      
+      toast({
+        title: (
+          <div className="flex items-center">
+            <CheckCircle className="mr-2 h-5 w-5 text-primary" /> 
+            <span>Bus Route Shared!</span>
+          </div>
+        ),
+        description: "The bus route details have been saved to the database.",
+        variant: "default",
+      });
+      form.reset();
+      // Ensure at least one stop field is present after reset
+      // Check if fields is empty after reset, and if so, append one.
+      // form.reset() might not immediately update `fields` length from useFieldArray
+      // So, directly ensure `stops` in defaultValues or explicitly append.
+      if (form.getValues("stops").length === 0) {
         append({ stopName: "", scheduledTime: "" });
+      }
+    } catch (error) {
+      console.error("Error adding bus route to Firestore: ", error);
+      toast({
+        title: "Error Sharing Route",
+        description: "There was a problem saving the bus route. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -91,7 +118,7 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>State</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. California" {...field} />
+                      <Input placeholder="e.g. California" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -104,7 +131,7 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>District</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Los Angeles County" {...field} />
+                      <Input placeholder="e.g. Los Angeles County" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -117,7 +144,7 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>City</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Los Angeles" {...field} />
+                      <Input placeholder="e.g. Los Angeles" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -133,7 +160,7 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>Route Name or Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Route 101, Downtown Express" {...field} />
+                      <Input placeholder="e.g. Route 101, Downtown Express" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -146,7 +173,7 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>Bus Number (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. B-789, V-1234" {...field} />
+                      <Input placeholder="e.g. B-789, V-1234" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -168,7 +195,7 @@ export function ShareBusRouteForm() {
                         <FormItem>
                           <FormLabel>Stop Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Main Street & 1st Ave" {...field} />
+                            <Input placeholder="e.g. Main Street & 1st Ave" {...field} disabled={isSubmitting} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -181,7 +208,7 @@ export function ShareBusRouteForm() {
                         <FormItem>
                           <FormLabel>Scheduled Time (HH:MM)</FormLabel>
                           <FormControl>
-                            <Input type="time" {...field} />
+                            <Input type="time" {...field} disabled={isSubmitting} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -196,6 +223,7 @@ export function ShareBusRouteForm() {
                       className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
                       onClick={() => remove(index)}
                       aria-label="Remove stop"
+                      disabled={isSubmitting}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -208,6 +236,7 @@ export function ShareBusRouteForm() {
                 size="sm"
                 onClick={() => append({ stopName: "", scheduledTime: "" })}
                 className="mt-4 flex items-center"
+                disabled={isSubmitting}
               >
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Stop
               </Button>
@@ -222,13 +251,15 @@ export function ShareBusRouteForm() {
               />
             </div>
             
-            <Button type="submit" className="w-full" size="lg">Share Bus Route</Button>
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? "Sharing..." : "Share Bus Route"}
+            </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter>
         <p className="text-xs text-muted-foreground">
-          Ensure all information is accurate before submitting.
+          Ensure all information is accurate before submitting. This data will be saved permanently.
         </p>
       </CardFooter>
     </Card>
