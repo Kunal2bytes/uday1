@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase'; // Assuming auth is exported from firebase.ts
+import { auth } from '@/lib/firebase'; 
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseError } from 'firebase/app';
 
@@ -18,9 +18,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// WARNING: THIS IS A FIXED DUMMY PASSWORD AND IS NOT SECURE FOR PRODUCTION.
-// It's used here to fulfill the UI requirement of "enter email and go"
-// while still creating a Firebase User object.
 const DUMMY_PASSWORD = "dummyPrototypePassword!123";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -49,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } else { // Logged in
         if (isSignInPage) {
-          router.push('/about-us'); // After sign-in, go to about-us
+          router.push('/about-us'); 
         }
       }
     }
@@ -58,36 +55,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInOrUpWithEmailAndDummyPassword = async (email: string) => {
     setLoading(true);
     try {
-      // Try to sign in first
       await signInWithEmailAndPassword(auth, email, DUMMY_PASSWORD);
-      // Successful sign-in, onAuthStateChanged will update user state and trigger redirection
       toast({ title: "Welcome Back!", description: "Signed in successfully." });
     } catch (error) {
-      if (error instanceof FirebaseError && error.code === 'auth/user-not-found') {
-        // User not found, try to create a new user
-        try {
-          await createUserWithEmailAndPassword(auth, email, DUMMY_PASSWORD);
-          // Successful creation, onAuthStateChanged will update user state and trigger redirection
-          toast({ title: "Account Created!", description: "Welcome to HOPE!" });
-        } catch (creationError) {
-          console.error("Error creating user:", creationError);
-          if (creationError instanceof FirebaseError) {
-            toast({ title: "Account Creation Failed", description: creationError.message, variant: "destructive" });
-          } else {
-            toast({ title: "Account Creation Failed", description: "An unknown error occurred.", variant: "destructive" });
+      if (error instanceof FirebaseError) {
+        if (error.code === 'auth/user-not-found') {
+          try {
+            await createUserWithEmailAndPassword(auth, email, DUMMY_PASSWORD);
+            toast({ title: "Account Created!", description: "Welcome to HOPE!" });
+          } catch (creationError) {
+            console.error("Error creating user:", creationError);
+            if (creationError instanceof FirebaseError) {
+              toast({ title: "Account Creation Failed", description: creationError.message, variant: "destructive" });
+            } else {
+              toast({ title: "Account Creation Failed", description: "An unknown error occurred during account creation.", variant: "destructive" });
+            }
           }
+        } else if (error.code === 'auth/wrong-password') {
+          toast({ title: "Sign-In Failed", description: "Incorrect credentials. If you previously used a different sign-in method, please try that or contact support.", variant: "destructive" });
+          console.error("Sign-in failed (wrong-password):", error);
+        } else if (error.code === 'auth/invalid-email') {
+          toast({ title: "Invalid Email", description: "The email address you entered is not valid. Please check and try again.", variant: "destructive" });
+          console.error("Sign-in error (invalid-email):", error);
+        } else if (error.code === 'auth/invalid-credential') {
+          toast({ title: "Sign-In Failed", description: "Invalid credentials provided. Please ensure your email is correct and try again. If the issue persists, your account might be disabled or require a different sign-in method.", variant: "destructive" });
+          console.error("Sign-in error (invalid-credential):", error);
+        } else {
+          toast({ title: "Sign-In Error", description: error.message, variant: "destructive" });
+          console.error("Sign-in error:", error);
         }
-      } else if (error instanceof FirebaseError && error.code === 'auth/wrong-password') {
-        // This case implies the email exists but DUMMY_PASSWORD is wrong,
-        // which shouldn't happen if all users are created with the same dummy password.
-        // However, it's a possible state if data was manually changed or from previous auth systems.
-        toast({ title: "Sign-In Failed", description: "Incorrect credentials (this shouldn't happen with the dummy password system).", variant: "destructive" });
-        console.error("Sign-in failed (wrong-password):", error);
-      } else if (error instanceof FirebaseError) {
-        toast({ title: "Sign-In Error", description: error.message, variant: "destructive" });
-        console.error("Sign-in error:", error);
       } else {
-        toast({ title: "Sign-In Error", description: "An unknown error occurred.", variant: "destructive" });
+        toast({ title: "Sign-In Error", description: "An unknown error occurred during sign-in.", variant: "destructive" });
         console.error("Unknown sign-in error:", error);
       }
     } finally {
@@ -99,7 +97,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await firebaseSignOut(auth);
-      // onAuthStateChanged will set user to null and trigger redirection
       router.push('/signin'); 
     } catch (error) {
       console.error("Error signing out: ", error);
@@ -113,16 +110,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  if (loading && (pathname === '/' || pathname === '/signin' || pathname === '/about-us')) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-        <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <p className="text-lg">Loading HOPE...</p>
-      </div>
-    );
+  // Global loading screen for initial auth check on critical paths
+  if (loading && (pathname !== '/about-us' && pathname !== '/terms-and-conditions')) {
+    const isPotentiallyProtected = !['/about-us', '/terms-and-conditions', '/signin'].includes(pathname);
+    if (isPotentiallyProtected || (pathname === '/signin' && !user)) { // Show loader if on signin and not yet determined user, or on protected if not public
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
+            <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-lg">Loading HOPE...</p>
+          </div>
+        );
+    }
   }
   
   return (
