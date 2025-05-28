@@ -4,37 +4,38 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase'; // Assuming auth is exported from firebase.ts
 import { useToast } from "@/hooks/use-toast";
+import { FirebaseError } from 'firebase/app';
 
 interface AuthContextType {
-  userEmail: string | null; // Changed from FirebaseUser to string | null
+  user: User | null;
   loading: boolean;
-  signInWithEnteredEmail: (email: string) => Promise<void>; // Renamed and changed signature
+  signInOrUpWithEmailAndDummyPassword: (email: string) => Promise<void>;
   signOutUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const USER_EMAIL_KEY = 'hopeAppUserEmail';
+
+// WARNING: THIS IS A FIXED DUMMY PASSWORD AND IS NOT SECURE FOR PRODUCTION.
+// It's used here to fulfill the UI requirement of "enter email and go"
+// while still creating a Firebase User object.
+const DUMMY_PASSWORD = "dummyPrototypePassword!123";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check localStorage for a persisted email on initial load
-    try {
-      const storedEmail = localStorage.getItem(USER_EMAIL_KEY);
-      if (storedEmail) {
-        setUserEmail(storedEmail);
-      }
-    } catch (error) {
-      console.error("Could not access localStorage:", error);
-      // Handle environments where localStorage might not be available or is restricted
-    }
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -42,38 +43,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const isPublicPage = pathname === '/about-us' || pathname === '/terms-and-conditions';
       const isSignInPage = pathname === '/signin';
 
-      if (!userEmail) { // Not "logged in"
+      if (!user) { // Not logged in
         if (!isPublicPage && !isSignInPage) {
-          router.push('/about-us'); // Default to about-us if not logged in and trying to access protected page
+          router.push('/signin'); 
         }
-      } else { // "Logged in"
+      } else { // Logged in
         if (isSignInPage) {
-          router.push('/'); // If logged in and on signin page, go to dashboard
+          router.push('/about-us'); // After sign-in, go to about-us
         }
       }
     }
-  }, [userEmail, loading, pathname, router]);
+  }, [user, loading, pathname, router]);
 
-  const signInWithEnteredEmail = async (email: string) => {
+  const signInOrUpWithEmailAndDummyPassword = async (email: string) => {
     setLoading(true);
-    // Basic email validation (can be more robust)
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
-        toast({
-            title: "Invalid Email",
-            description: "Please enter a valid email address.",
-            variant: "destructive",
-        });
-        setLoading(false);
-        return;
-    }
     try {
-      localStorage.setItem(USER_EMAIL_KEY, email);
-      setUserEmail(email);
-      // After "signing in" with email, redirect to dashboard
-      router.push('/'); 
+      // Try to sign in first
+      await signInWithEmailAndPassword(auth, email, DUMMY_PASSWORD);
+      // Successful sign-in, onAuthStateChanged will update user state and trigger redirection
+      toast({ title: "Welcome Back!", description: "Signed in successfully." });
     } catch (error) {
-      console.error("Error during simulated sign-in:", error);
-      toast({ title: "Error", description: "Could not save email.", variant: "destructive" });
+      if (error instanceof FirebaseError && error.code === 'auth/user-not-found') {
+        // User not found, try to create a new user
+        try {
+          await createUserWithEmailAndPassword(auth, email, DUMMY_PASSWORD);
+          // Successful creation, onAuthStateChanged will update user state and trigger redirection
+          toast({ title: "Account Created!", description: "Welcome to HOPE!" });
+        } catch (creationError) {
+          console.error("Error creating user:", creationError);
+          if (creationError instanceof FirebaseError) {
+            toast({ title: "Account Creation Failed", description: creationError.message, variant: "destructive" });
+          } else {
+            toast({ title: "Account Creation Failed", description: "An unknown error occurred.", variant: "destructive" });
+          }
+        }
+      } else if (error instanceof FirebaseError && error.code === 'auth/wrong-password') {
+        // This case implies the email exists but DUMMY_PASSWORD is wrong,
+        // which shouldn't happen if all users are created with the same dummy password.
+        // However, it's a possible state if data was manually changed or from previous auth systems.
+        toast({ title: "Sign-In Failed", description: "Incorrect credentials (this shouldn't happen with the dummy password system).", variant: "destructive" });
+        console.error("Sign-in failed (wrong-password):", error);
+      } else if (error instanceof FirebaseError) {
+        toast({ title: "Sign-In Error", description: error.message, variant: "destructive" });
+        console.error("Sign-in error:", error);
+      } else {
+        toast({ title: "Sign-In Error", description: "An unknown error occurred.", variant: "destructive" });
+        console.error("Unknown sign-in error:", error);
+      }
     } finally {
       setLoading(false);
     }
@@ -82,10 +98,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOutUser = async () => {
     setLoading(true);
     try {
-      localStorage.removeItem(USER_EMAIL_KEY);
-      setUserEmail(null);
-      router.push('/signin'); // Redirect to signin page after sign out
-    } catch (error)      {
+      await firebaseSignOut(auth);
+      // onAuthStateChanged will set user to null and trigger redirection
+      router.push('/signin'); 
+    } catch (error) {
       console.error("Error signing out: ", error);
       toast({
         title: "Sign-Out Failed",
@@ -97,7 +113,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Show global loader for initial localStorage check or during transitions
   if (loading && (pathname === '/' || pathname === '/signin' || pathname === '/about-us')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
@@ -111,7 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
   
   return (
-    <AuthContext.Provider value={{ userEmail, loading, signInWithEnteredEmail, signOutUser }}>
+    <AuthContext.Provider value={{ user, loading, signInOrUpWithEmailAndDummyPassword, signOutUser }}>
       {children}
     </AuthContext.Provider>
   );
