@@ -34,9 +34,10 @@ export default function SignInPage() {
       });
       return;
     }
+    // Client-side email format validation
     if (!/\S+@\S+\.\S+/.test(email)) {
         toast({
-            title: "Invalid Email",
+            title: "Invalid Email Format",
             description: "Please enter a valid email address.",
             variant: "destructive",
         });
@@ -50,13 +51,22 @@ export default function SignInPage() {
       // and its useEffect will handle redirection to /about-us
     } catch (error) {
       // Error is already handled and toasted in AuthContext's signInOrUpWithEmailAndDummyPassword
-      console.error("Sign-in attempt from SignInPage failed, error handled by AuthContext:", error);
+      // This catch block here is more for unexpected issues if signInOrUp... itself throws an error
+      // not originating from Firebase directly (which is unlikely here).
+      console.error("Sign-in attempt from SignInPage failed, error potentially propagated from AuthContext:", error);
+      if (!(error instanceof Error && (error as any).code?.startsWith('auth/'))) {
+        toast({
+          title: "Sign-In Process Error",
+          description: "An unexpected error occurred during the sign-in process.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (authLoading && !user) { 
+  if (authLoading && !user && pathname !== '/about-us' && pathname !== '/terms-and-conditions') { 
      return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
