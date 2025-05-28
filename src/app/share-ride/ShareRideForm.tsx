@@ -19,10 +19,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
-// import { mockRides, type Ride } from "@/lib/mockData"; // Firebase will replace mockRides
-import type { Ride } from "@/lib/mockData"; // Keep Ride type for now
-import { db } from "@/lib/firebase"; // Import Firebase db instance
+import type { Ride } from "@/lib/mockData"; 
+import { db } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { CheckCircle } from "lucide-react"; // Added import
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -94,19 +94,20 @@ export function ShareRideForm() {
       gender: data.gender,
       seatingCapacity: data.seatingCapacity,
       contactNumber: data.contactNumber,
-      // distanceKm is not collected here, can be added if needed
-      createdAt: serverTimestamp(), // Add a timestamp
+      createdAt: serverTimestamp(), 
     };
 
     try {
       const docRef = await addDoc(collection(db, "rides"), newRidePayload);
       console.log("Ride added to Firestore with ID: ", docRef.id);
       
-      // mockRides.push(newRide); // Remove: No longer pushing to mockRides
-      // console.log("Updated mockRides:", mockRides);
-
       toast({
-        title: "Ride Shared Successfully!",
+        title: (
+          <div className="flex items-center">
+            <CheckCircle className="mr-2 h-5 w-5 text-primary" /> 
+            <span>Ride Shared Successfully!</span>
+          </div>
+        ),
         description: "Your ride details have been submitted and saved to the database.",
         variant: "default",
       });
