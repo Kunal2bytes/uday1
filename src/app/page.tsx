@@ -95,7 +95,6 @@ export default function DashboardPage() {
         setIsLoadingRides(true);
         try {
           const ridesCollectionRef = collection(db, "rides");
-          // Fetch all rides initially, ordered by creation time
           const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
           const querySnapshot = await getDocs(q);
           const ridesData = querySnapshot.docs.map(docSnapshot => { 
@@ -103,7 +102,7 @@ export default function DashboardPage() {
             return { 
               id: docSnapshot.id, 
               ...data,
-              createdAt: data.createdAt as Timestamp // Assuming createdAt is always a Timestamp
+              createdAt: data.createdAt as Timestamp 
             } as Ride;
           });
           setAllRidesFromDB(ridesData);
@@ -130,7 +129,7 @@ export default function DashboardPage() {
     const lowerDestination = destinationSearch.toLowerCase().trim();
 
     if (!lowerOrigin && !lowerDestination) {
-      setFilteredRides([]); // Clear results if search bars are empty
+      setFilteredRides([]); 
       return;
     }
 
@@ -149,18 +148,16 @@ export default function DashboardPage() {
 
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
+  // This function remains for potential use, or for other parts of the app if necessary.
+  // The "Call Rider" button on this page will directly link to tel:
   const handleBookRide = async (rideToBook: Ride) => {
-    // 1. Save to localStorage ("Your Rides")
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
       const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === rideToBook.id);
       if (!isRideAlreadyBooked) {
-        bookedRides.push(rideToBook); // Store the full ride object
+        bookedRides.push(rideToBook); 
         localStorage.setItem('bookedRides', JSON.stringify(bookedRides));
-        console.log("Ride saved to Your Rides (localStorage).");
-      } else {
-        console.log("Ride already in Your Rides (localStorage).");
       }
     } catch (e) {
       console.error("Failed to save ride to localStorage:", e);
@@ -169,20 +166,13 @@ export default function DashboardPage() {
         description: "Could not save this ride to 'Your Rides'.",
         variant: "destructive",
       });
-      return; // Stop if localStorage saving fails
+      return; 
     }
 
-    // 2. Delete from Firestore
     try {
       const rideRef = doc(db, "rides", rideToBook.id);
       await deleteDoc(rideRef);
-      console.log(`Ride ${rideToBook.id} deleted from Firestore.`);
-
-      // 3. Update local UI list
       setAllRidesFromDB(prevRides => prevRides.filter(r => r.id !== rideToBook.id));
-      // This will indirectly update filteredRides via the useEffect that depends on allRidesFromDB
-
-      // 4. Show success toast
       toast({
         title: (
           <div className="flex items-center">
@@ -193,7 +183,6 @@ export default function DashboardPage() {
         description: "Go to the menu page and check the 'Your Rides' section.",
         variant: "default",
       });
-
     } catch (error) {
       console.error("Error deleting ride from Firestore:", error);
       toast({
@@ -480,13 +469,15 @@ export default function DashboardPage() {
                         )}
                       </CardContent>
                       <CardFooter className="pt-3">
-                        <Button
-                          onClick={() => handleBookRide(ride)}
-                          className="w-full"
-                          size="sm"
-                        >
-                          Book Ride
-                        </Button>
+                        {ride.contactNumber ? (
+                          <Button asChild className="w-full" size="sm">
+                            <a href={`tel:${ride.contactNumber}`}>Call Rider 📞</a>
+                          </Button>
+                        ) : (
+                          <Button className="w-full" size="sm" disabled>
+                            Contact N/A
+                          </Button>
+                        )}
                       </CardFooter>
                     </Card>
                   ))}
@@ -534,3 +525,4 @@ export default function DashboardPage() {
 
 
     
+

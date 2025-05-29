@@ -159,7 +159,7 @@ export function ShareRideForm() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. John Doe" {...field} disabled={isSubmitting}/>
+                    <Input placeholder="e.g. Uday Jatale" {...field} disabled={isSubmitting}/>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
