@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'; 
 
 export default function AboutUsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { userPhoneNumber, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -20,14 +20,12 @@ export default function AboutUsPage() {
 
   const handleGotItClick = async () => {
     setIsProcessing(true);
-    if (user) {
-      // If user is already authenticated, go to dashboard
+    if (userPhoneNumber) {
+      // If user is already "signed in" (phone number is set), go to dashboard
       router.push('/');
     } else {
-      // This case should ideally not be hit if AuthContext redirects correctly,
-      // but as a fallback, send to signin.
-      // Or, if the design intends "About Us" to be the entry point before any auth attempt:
-      router.push('/signin'); // Redirect to signin if not authenticated
+      // If no phone number is set, direct to signin page
+      router.push('/signin'); 
     }
     // setIsProcessing(false); // Navigation will occur
   };

@@ -10,63 +10,71 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
-import { LogIn } from 'lucide-react';
+import { LogIn, Smartphone } from 'lucide-react';
 
 export default function SignInPage() {
-  const { signInOrUpWithEmailAndDummyPassword, user, loading: authLoading } = useAuth();
+  const { signInWithPhoneNumber, userPhoneNumber, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [error, setError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/about-us'); // If user is already authenticated, redirect to about-us
+    if (!authLoading && userPhoneNumber) {
+      router.push('/about-us'); 
     }
-  }, [user, authLoading, router]);
+  }, [userPhoneNumber, authLoading, router]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow only numbers and limit to 10 digits
+    if (/^\d*$/.test(value) && value.length <= 10) {
+      setMobileNumber(value);
+      if (error) setError(""); // Clear error when user types
+    }
+  };
+
+  const validatePhoneNumber = (number: string): boolean => {
+    if (number.length !== 10) {
+      setError("Mobile number must be exactly 10 digits.");
+      return false;
+    }
+    if (!/^\d{10}$/.test(number)) {
+      setError("Mobile number must contain only digits.");
+      return false;
+    }
+    setError("");
+    return true;
+  };
 
   const handleSignIn = async () => {
-    if (!email.trim()) {
-      toast({
-        title: "Email Required",
-        description: "Please enter your Gmail address.",
-        variant: "destructive",
-      });
+    if (!validatePhoneNumber(mobileNumber)) {
       return;
-    }
-    // Client-side email format validation
-    if (!/\S+@\S+\.\S+/.test(email)) {
-        toast({
-            title: "Invalid Email Format",
-            description: "Please enter a valid email address.",
-            variant: "destructive",
-        });
-        return;
     }
 
     setIsProcessing(true);
+    setError(""); 
+    const fullPhoneNumber = "+91" + mobileNumber; 
     try {
-      await signInOrUpWithEmailAndDummyPassword(email);
-      // On success, AuthContext's onAuthStateChanged will update user state 
-      // and its useEffect will handle redirection to /about-us
-    } catch (error) {
-      // Error is already handled and toasted in AuthContext's signInOrUpWithEmailAndDummyPassword
-      // This catch block here is more for unexpected issues if signInOrUp... itself throws an error
-      // not originating from Firebase directly (which is unlikely here).
-      console.error("Sign-in attempt from SignInPage failed, error potentially propagated from AuthContext:", error);
-      if (!(error instanceof Error && (error as any).code?.startsWith('auth/'))) {
-        toast({
-          title: "Sign-In Process Error",
-          description: "An unexpected error occurred during the sign-in process.",
-          variant: "destructive",
-        });
-      }
+      await signInWithPhoneNumber(fullPhoneNumber);
+      // On success, AuthContext's useEffect will handle redirection to /about-us
+    } catch (err) {
+      // This catch is for unexpected errors in signInWithPhoneNumber itself,
+      // though in this prototype version it's unlikely.
+      console.error("Sign-in process error from SignInPage:", err);
+      setError("An unexpected error occurred. Please try again.");
+      toast({
+        title: "Sign-In Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
   };
-
-  if (authLoading && !user && pathname !== '/about-us' && pathname !== '/terms-and-conditions') { 
+  
+  if (authLoading && !userPhoneNumber) { 
      return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -94,22 +102,29 @@ export default function SignInPage() {
           <h2 className="text-2xl font-semibold text-card-foreground">Enter App</h2>
           
           <div className="space-y-2 text-left">
-            <Label htmlFor="email-input" className="text-sm font-medium text-muted-foreground">Enter your Gmail</Label>
-            <Input
-              id="email-input"
-              type="email"
-              placeholder="example@gmail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-input border-border placeholder:text-muted-foreground text-foreground rounded-lg"
-              disabled={isProcessing || authLoading}
-            />
+            <Label htmlFor="mobile-input" className="text-sm font-medium text-muted-foreground">Enter your Mobile Number</Label>
+            <div className="flex items-center space-x-2">
+              <span className="inline-flex items-center px-3 py-2 border border-border rounded-l-md bg-muted text-muted-foreground text-sm">
+                +91
+              </span>
+              <Input
+                id="mobile-input"
+                type="tel" 
+                placeholder="XXXXXXXXXX"
+                value={mobileNumber}
+                onChange={handleInputChange}
+                className="bg-input border-border placeholder:text-muted-foreground text-foreground rounded-r-md focus:border-primary focus:ring-primary flex-1 min-w-0"
+                disabled={isProcessing || authLoading}
+                maxLength={10}
+              />
+            </div>
+            {error && <p className="text-sm text-destructive text-left pt-1">{error}</p>}
           </div>
 
           <Button 
             onClick={handleSignIn} 
             className="w-full py-3 text-base bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-md transition-transform duration-150 hover:scale-105 flex items-center justify-center"
-            disabled={authLoading || isProcessing}
+            disabled={authLoading || isProcessing || mobileNumber.length !== 10}
             size="lg"
           >
             <LogIn className="mr-2 h-5 w-5" />

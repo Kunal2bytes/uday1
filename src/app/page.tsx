@@ -32,12 +32,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Ride } from '@/lib/mockData';
+import type { Ride } from '@/lib/mockData'; 
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
-import { useAuth } from "@/contexts/AuthContext";
+import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore"; // Keep Timestamp
+import { useAuth } from "@/contexts/AuthContext"; // Updated AuthContext
 import { useRouter } from "next/navigation";
 
 const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; label: string; onClick?: () => void; href?: string }) => {
@@ -72,7 +72,7 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 };
 
 export default function DashboardPage() {
-  const { userEmail, loading: authLoading, signOutUser } = useAuth(); 
+  const { userPhoneNumber, loading: authLoading, signOutUser } = useAuth(); 
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
@@ -84,14 +84,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // AuthProvider handles redirection for unauthenticated users
-    if (authLoading) return; // Wait for auth state to be determined
-    if (!userEmail && !authLoading) { // If still no userEmail after loading, redirect
-        router.push('/about-us');
+    if (authLoading) return; 
+    if (!userPhoneNumber && !authLoading) { 
+        router.push('/signin'); // Or /about-us depending on desired flow for unauth dashboard access
     }
-  }, [userEmail, authLoading, router]);
+  }, [userPhoneNumber, authLoading, router]);
 
   useEffect(() => {
-    if (userEmail) { // Only fetch rides if user is "signed in"
+    if (userPhoneNumber) { 
       const fetchRides = async () => {
         setIsLoadingRides(true);
         try {
@@ -124,7 +124,7 @@ export default function DashboardPage() {
       setFilteredRides([]);
       setIsLoadingRides(false);
     }
-  }, [userEmail, toast]); 
+  }, [userPhoneNumber, toast]); 
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
@@ -212,7 +212,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading || (!authLoading && !userEmail)) {
+  if (authLoading || (!authLoading && !userPhoneNumber)) {
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
