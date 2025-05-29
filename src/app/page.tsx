@@ -72,7 +72,7 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 };
 
 export default function DashboardPage() {
-  const { userPhoneNumber, loading: authLoading, signOutUser } = useAuth(); 
+  const { user, loading: authLoading, signOutUser } = useAuth(); // Use Firebase user object
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
@@ -84,46 +84,43 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (authLoading) return; 
-    if (!userPhoneNumber && !authLoading) { 
-        router.push('/about-us');
+    if (!user && !authLoading) { 
+        // AuthContext will handle redirection to /signin
+        return;
     }
-  }, [userPhoneNumber, authLoading, router]);
-
-  useEffect(() => {
-    if (userPhoneNumber) { 
-      const fetchRides = async () => {
-        setIsLoadingRides(true);
-        try {
-          const ridesCollectionRef = collection(db, "rides");
-          const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
-          const querySnapshot = await getDocs(q);
-          const ridesData = querySnapshot.docs.map(docSnapshot => { 
-            const data = docSnapshot.data();
-            return { 
-              id: docSnapshot.id, 
-              ...data,
-              createdAt: data.createdAt as Timestamp 
-            } as Ride;
-          });
-          setAllRidesFromDB(ridesData);
-        } catch (error) {
-          console.error("Error fetching rides from Firestore: ", error);
-          toast({
-            title: "Error Fetching Rides",
-            description: "Could not load rides. Please check your connection or try again later.",
-            variant: "destructive",
-          });
-        }
-        setIsLoadingRides(false);
-      };
+    // If user is authenticated, proceed to fetch rides
+    if (user) {
       fetchRides();
-    } else {
-      setAllRidesFromDB([]);
-      setFilteredRides([]);
-      setIsLoadingRides(false);
     }
-  }, [userPhoneNumber, toast]); 
+  }, [user, authLoading, router]); // Removed fetchRides from dependency array
 
+  const fetchRides = async () => {
+    setIsLoadingRides(true);
+    try {
+      const ridesCollectionRef = collection(db, "rides");
+      const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      const ridesData = querySnapshot.docs.map(docSnapshot => { 
+        const data = docSnapshot.data();
+        return { 
+          id: docSnapshot.id, 
+          ...data,
+          // Ensure createdAt is properly cast if needed, but usually spread works if types match
+          createdAt: data.createdAt as Timestamp 
+        } as Ride;
+      });
+      setAllRidesFromDB(ridesData);
+    } catch (error) {
+      console.error("Error fetching rides from Firestore: ", error);
+      toast({
+        title: "Error Fetching Rides",
+        description: "Could not load rides. Please check your connection or try again later.",
+        variant: "destructive",
+      });
+    }
+    setIsLoadingRides(false);
+  };
+  
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
     const lowerDestination = destinationSearch.toLowerCase().trim();
@@ -149,6 +146,7 @@ export default function DashboardPage() {
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
   const handleBookAndCallRider = async (rideToBook: Ride) => {
+    setIsLoadingRides(true); // Indicate processing
     // 1. Save to localStorage ("Your Rides")
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
@@ -168,6 +166,7 @@ export default function DashboardPage() {
         description: "Could not save this ride to 'Your Rides'.",
         variant: "destructive",
       });
+      setIsLoadingRides(false);
       return; 
     }
 
@@ -205,8 +204,8 @@ export default function DashboardPage() {
         description: "Could not complete the booking process. Please try again.",
         variant: "destructive",
       });
-      // If Firestore deletion failed, we might want to revert localStorage change,
-      // but for simplicity in prototype, we'll leave it.
+    } finally {
+        setIsLoadingRides(false);
     }
   };
   
@@ -242,7 +241,9 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading || (!authLoading && !userPhoneNumber)) {
+  // AuthContext's global loading screen handles the initial check.
+  // This component's specific loader is for its own data fetching.
+  if (authLoading) { // Still wait for auth to be fully resolved before rendering dashboard attempts
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -253,6 +254,14 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  // If not authLoading and no user, AuthProvider should have redirected.
+  // This is a fallback or for when user state changes after initial load.
+  if (!user) {
+    // AuthProvider should redirect to /signin. This just prevents rendering dashboard content prematurely.
+    return null; 
+  }
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center">
@@ -490,7 +499,7 @@ export default function DashboardPage() {
                           onClick={() => handleBookAndCallRider(ride)}
                           className="w-full" 
                           size="sm"
-                          disabled={!ride.contactNumber} // Disable if no contact number
+                          disabled={isLoadingRides || !ride.contactNumber} 
                         >
                           Call Rider 📞
                         </Button>
@@ -532,16 +541,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-    
-
-    
-
-    
-
-
-
-    
-
-
-
-      

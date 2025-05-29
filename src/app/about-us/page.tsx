@@ -11,25 +11,26 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'; 
 
 export default function AboutUsPage() {
-  const { userPhoneNumber, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth(); // Use Firebase user object
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // This page is public. AuthProvider handles redirection if a user
-  // tries to access protected routes without being authenticated.
-
   const handleGotItClick = async () => {
     setIsProcessing(true);
-    if (userPhoneNumber) {
-      // If user is already "signed in" (phone number is set), go to dashboard
+    if (user) {
+      // If user is already signed in (Firebase user object exists), go to dashboard
       router.push('/');
     } else {
-      // If no phone number is set, direct to signin page
+      // This case should ideally not be hit if AuthContext redirects unauth users from here,
+      // but as a fallback, or if this page is somehow accessed by unauth user directly.
       router.push('/signin'); 
     }
     // setIsProcessing(false); // Navigation will occur
   };
   
+  // Public page, but "Got it" button behavior depends on auth state.
+  // AuthProvider handles redirection for truly protected routes.
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center p-4 sm:p-6">
       <div className="w-full max-w-3xl">
