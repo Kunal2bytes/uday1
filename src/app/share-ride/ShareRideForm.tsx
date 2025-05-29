@@ -41,7 +41,7 @@ const formSchema = z.object({
     .refine(val => !val || val === "" || VALID_VEHICLE_NUMBER_REGEX.test(val), {
       message: "Invalid vehicle number format. Expected: MH 12 DE 1234 or empty.",
     }),
-  seatingCapacity: z.coerce.number().int().positive({ message: "Seating capacity must be a positive number." }),
+  seatingCapacity: z.coerce.number().int().nonnegative({ message: "Seating capacity cannot be negative." }),
   gender: z.enum(["male", "female", "other"], { required_error: "Please select a gender." }),
 }).superRefine((data, ctx) => {
   if (data.vehicle === "bike" && data.seatingCapacity > 2) {
@@ -81,7 +81,7 @@ export function ShareRideForm() {
       destination: "",
       timeToGo: "",
       vehicleNumber: "",
-      seatingCapacity: 1,
+      seatingCapacity: 0, // Default to 0 or 1 as appropriate
       // vehicle: undefined, // Let user select
       // gender: undefined, // Let user select
     },
@@ -128,7 +128,7 @@ export function ShareRideForm() {
         timeToGo: "",
         vehicleNumber: "",
         vehicle: undefined, 
-        seatingCapacity: 1, 
+        seatingCapacity: 0, // Reset to 0 or 1
         gender: undefined,
       });
     } catch (error) {
@@ -349,3 +349,4 @@ export function ShareRideForm() {
     </Card>
   );
 }
+
