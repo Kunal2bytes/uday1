@@ -36,7 +36,7 @@ import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, Timestamp, doc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, Timestamp, doc, deleteDoc, where } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -95,18 +95,18 @@ export default function DashboardPage() {
         setIsLoadingRides(true);
         try {
           const ridesCollectionRef = collection(db, "rides");
+          // Fetch all rides initially, ordered by creation time
           const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
           const querySnapshot = await getDocs(q);
-          const ridesData = querySnapshot.docs.map(docSnapshot => { // Renamed doc to docSnapshot
+          const ridesData = querySnapshot.docs.map(docSnapshot => { 
             const data = docSnapshot.data();
             return { 
               id: docSnapshot.id, 
               ...data,
-              createdAt: data.createdAt as Timestamp 
+              createdAt: data.createdAt as Timestamp // Assuming createdAt is always a Timestamp
             } as Ride;
           });
           setAllRidesFromDB(ridesData);
-          // setFilteredRides(ridesData); // Filtering now happens in another useEffect
         } catch (error) {
           console.error("Error fetching rides from Firestore: ", error);
           toast({
@@ -130,7 +130,7 @@ export default function DashboardPage() {
     const lowerDestination = destinationSearch.toLowerCase().trim();
 
     if (!lowerOrigin && !lowerDestination) {
-      setFilteredRides([]); 
+      setFilteredRides([]); // Clear results if search bars are empty
       return;
     }
 
@@ -150,12 +150,13 @@ export default function DashboardPage() {
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
   const handleBookRide = async (rideToBook: Ride) => {
+    // 1. Save to localStorage ("Your Rides")
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
       const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === rideToBook.id);
       if (!isRideAlreadyBooked) {
-        bookedRides.push(rideToBook);
+        bookedRides.push(rideToBook); // Store the full ride object
         localStorage.setItem('bookedRides', JSON.stringify(bookedRides));
         console.log("Ride saved to Your Rides (localStorage).");
       } else {
@@ -168,17 +169,20 @@ export default function DashboardPage() {
         description: "Could not save this ride to 'Your Rides'.",
         variant: "destructive",
       });
-      return; 
+      return; // Stop if localStorage saving fails
     }
 
+    // 2. Delete from Firestore
     try {
       const rideRef = doc(db, "rides", rideToBook.id);
       await deleteDoc(rideRef);
       console.log(`Ride ${rideToBook.id} deleted from Firestore.`);
 
+      // 3. Update local UI list
       setAllRidesFromDB(prevRides => prevRides.filter(r => r.id !== rideToBook.id));
       // This will indirectly update filteredRides via the useEffect that depends on allRidesFromDB
 
+      // 4. Show success toast
       toast({
         title: (
           <div className="flex items-center">
@@ -197,9 +201,11 @@ export default function DashboardPage() {
         description: "Could not remove the ride from available listings. Please try again.",
         variant: "destructive",
       });
+      // Optional: If Firestore deletion fails, you might want to revert the localStorage change.
+      // This adds complexity, so for a prototype, it might be acceptable to leave it as is.
     }
   };
-
+  
   const handleShareApp = async () => {
     if (navigator.share) {
       try {
@@ -523,3 +529,6 @@ export default function DashboardPage() {
 
     
 
+
+
+    

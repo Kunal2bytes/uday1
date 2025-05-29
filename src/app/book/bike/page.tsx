@@ -46,12 +46,13 @@ export default function BookBikePage() {
   };
 
   const handleBookRide = async (rideToBook: Ride) => {
+    // 1. Save to localStorage ("Your Rides")
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
       const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === rideToBook.id);
       if (!isRideAlreadyBooked) {
-        bookedRides.push(rideToBook);
+        bookedRides.push(rideToBook); // Store the full ride object
         localStorage.setItem('bookedRides', JSON.stringify(bookedRides));
         console.log("Ride saved to Your Rides (localStorage).");
       } else {
@@ -67,13 +68,16 @@ export default function BookBikePage() {
       return; 
     }
 
+    // 2. Delete from Firestore
     try {
       const rideRef = doc(db, "rides", rideToBook.id);
       await deleteDoc(rideRef);
       console.log(`Ride ${rideToBook.id} deleted from Firestore.`);
 
+      // 3. Update local UI list
       setBikeRides(prevRides => prevRides.filter(r => r.id !== rideToBook.id));
 
+      // 4. Show success toast
       toast({
         title: (
           <div className="flex items-center">
@@ -177,6 +181,9 @@ export default function BookBikePage() {
     </div>
   );
 }
+
+
+    
 
 
     

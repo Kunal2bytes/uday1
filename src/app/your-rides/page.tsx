@@ -33,14 +33,23 @@ export default function YourRidesPage() {
     try {
       const storedRidesString = localStorage.getItem('bookedRides');
       if (storedRidesString) {
-        const ridesFromStorage: Ride[] = JSON.parse(storedRidesString);
-        // Sort by createdAt if available, most recent first
+        let ridesFromStorage: Ride[] = JSON.parse(storedRidesString);
+        // Sort by createdAt if available (assuming it's an ISO string from JSON.stringify of Timestamp)
         ridesFromStorage.sort((a, b) => {
           if (a.createdAt && b.createdAt) {
-            return b.createdAt.toMillis() - a.createdAt.toMillis();
+            try {
+              // Firestore Timestamps are often serialized to ISO strings or objects with seconds/nanoseconds
+              // For robust sorting, convert to Date objects
+              const dateA = new Date(a.createdAt as unknown as string); 
+              const dateB = new Date(b.createdAt as unknown as string);
+              if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+                return dateB.getTime() - dateA.getTime(); // Sort descending (most recent first)
+              }
+            } catch (e) {
+              console.error("Error parsing date for sorting booked rides:", e);
+            }
           }
-          // Fallback if createdAt is missing, though unlikely with Firestore data
-          return 0; 
+          return 0; // Default: no change in order or if dates are invalid/missing
         });
         setBookedRides(ridesFromStorage);
       }
@@ -172,5 +181,7 @@ export default function YourRidesPage() {
     </div>
   );
 }
+
+    
 
     
