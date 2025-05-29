@@ -19,10 +19,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
-import type { Ride } from "@/lib/mockData"; 
+// import type { Ride } from "@/lib/mockData"; // Not directly used for form values
 import { db } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { CheckCircle } from "lucide-react"; // Added import
+import { CheckCircle } from "lucide-react";
+
+const VALID_VEHICLE_NUMBER_REGEX = /^[A-Z]{2}\s\d{2}\s[A-Z]{2}\s\d{4}$/;
 
 const formSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -34,6 +36,11 @@ const formSchema = z.object({
   destination: z.string().min(3, { message: "Destination must be at least 3 characters." }),
   timeToGo: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format (HH:MM)." }),
   vehicle: z.enum(["bike", "car", "auto"], { required_error: "Please select a vehicle type." }),
+  vehicleNumber: z.string()
+    .optional()
+    .refine(val => !val || val === "" || VALID_VEHICLE_NUMBER_REGEX.test(val), {
+      message: "Invalid vehicle number format. Expected: MH 12 DE 1234 or empty.",
+    }),
   seatingCapacity: z.coerce.number().int().positive({ message: "Seating capacity must be a positive number." }),
   gender: z.enum(["male", "female", "other"], { required_error: "Please select a gender." }),
 }).superRefine((data, ctx) => {
@@ -73,6 +80,7 @@ export function ShareRideForm() {
       origin: "",
       destination: "",
       timeToGo: "",
+      vehicleNumber: "",
       seatingCapacity: 1,
       // vehicle: undefined, // Let user select
       // gender: undefined, // Let user select
@@ -91,6 +99,7 @@ export function ShareRideForm() {
       destination: data.destination,
       timeToGo: data.timeToGo,
       vehicle: data.vehicle,
+      vehicleNumber: data.vehicleNumber || "", // Store empty string if undefined
       gender: data.gender,
       seatingCapacity: data.seatingCapacity,
       contactNumber: data.contactNumber,
@@ -117,6 +126,7 @@ export function ShareRideForm() {
         origin: "",
         destination: "",
         timeToGo: "",
+        vehicleNumber: "",
         vehicle: undefined, 
         seatingCapacity: 1, 
         gender: undefined,
@@ -206,6 +216,26 @@ export function ShareRideForm() {
                     <Input type="time" {...field} disabled={isSubmitting}/>
                   </FormControl>
                   <FormDescription>Use HH:MM format (24-hour).</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="vehicleNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Vehicle Number (Optional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="ex. MH 12 DE 1234" 
+                      {...field} 
+                      value={field.value || ""} // Ensure value is not undefined for input
+                      onChange={(e) => field.onChange(e.target.value.toUpperCase())} // Convert to uppercase on change
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormDescription>Format: XX 00 XX 0000 (e.g., MH 12 DE 1234)</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

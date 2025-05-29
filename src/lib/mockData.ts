@@ -12,6 +12,7 @@ export interface Ride {
   gender: "male" | "female" | "other";
   seatingCapacity: number; // Total capacity including driver
   contactNumber?: string;
+  vehicleNumber?: string; // Added vehicle number field
   distanceKm?: number; // Optional: Only relevant for auto pre-filtering if re-implemented
   createdAt?: Timestamp; // For Firestore serverTimestamp
 }
@@ -32,22 +33,3 @@ export interface BusRoute {
   stops: BusStop[];
   createdAt?: Timestamp; // For Firestore serverTimestamp
 }
-
-// mockBusRoutes array is removed as data will now be fetched from Firestore.
-// Example structure (for reference, not used in code anymore):
-// export let mockBusRoutes: BusRoute[] = [
-//     {
-//     id: "br1",
-//     state: "California",
-//     district: "Los Angeles County",
-//     city: "Los Angeles",
-//     routeNameOrNumber: "Route 66 Express",
-//     busNumber: "B-101",
-//     stops: [
-//       { stopName: "Downtown LA", scheduledTime: "08:00" },
-//       { stopName: "Hollywood", scheduledTime: "08:30" },
-//       { stopName: "Santa Monica Pier", scheduledTime: "09:15" },
-//     ],
-//     createdAt: undefined, 
-//   },
-// ];
