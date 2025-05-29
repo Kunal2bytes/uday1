@@ -148,9 +148,8 @@ export default function DashboardPage() {
 
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
-  // This function remains for potential use, or for other parts of the app if necessary.
-  // The "Call Rider" button on this page will directly link to tel:
-  const handleBookRide = async (rideToBook: Ride) => {
+  const handleBookAndCallRider = async (rideToBook: Ride) => {
+    // 1. Save to localStorage ("Your Rides")
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
@@ -158,6 +157,9 @@ export default function DashboardPage() {
       if (!isRideAlreadyBooked) {
         bookedRides.push(rideToBook); 
         localStorage.setItem('bookedRides', JSON.stringify(bookedRides));
+        console.log("Ride saved to Your Rides (localStorage).");
+      } else {
+        console.log("Ride already in Your Rides (localStorage).");
       }
     } catch (e) {
       console.error("Failed to save ride to localStorage:", e);
@@ -169,10 +171,17 @@ export default function DashboardPage() {
       return; 
     }
 
+    // 2. Delete from Firestore
     try {
       const rideRef = doc(db, "rides", rideToBook.id);
       await deleteDoc(rideRef);
+      console.log(`Ride ${rideToBook.id} deleted from Firestore.`);
+
+      // 3. Update local UI list
       setAllRidesFromDB(prevRides => prevRides.filter(r => r.id !== rideToBook.id));
+      // setFilteredRides will update automatically due to allRidesFromDB change in useEffect
+
+      // 4. Show success toast
       toast({
         title: (
           <div className="flex items-center">
@@ -183,13 +192,21 @@ export default function DashboardPage() {
         description: "Go to the menu page and check the 'Your Rides' section.",
         variant: "default",
       });
+
+      // 5. Programmatically open dialer if contact number exists
+      if (rideToBook.contactNumber) {
+        window.location.href = `tel:${rideToBook.contactNumber}`;
+      }
+
     } catch (error) {
-      console.error("Error deleting ride from Firestore:", error);
+      console.error("Error during booking process:", error);
       toast({
         title: "Booking Error",
-        description: "Could not remove the ride from available listings. Please try again.",
+        description: "Could not complete the booking process. Please try again.",
         variant: "destructive",
       });
+      // If Firestore deletion failed, we might want to revert localStorage change,
+      // but for simplicity in prototype, we'll leave it.
     }
   };
   
@@ -469,15 +486,14 @@ export default function DashboardPage() {
                         )}
                       </CardContent>
                       <CardFooter className="pt-3">
-                        {ride.contactNumber ? (
-                          <Button asChild className="w-full" size="sm">
-                            <a href={`tel:${ride.contactNumber}`}>Call Rider 📞</a>
-                          </Button>
-                        ) : (
-                          <Button className="w-full" size="sm" disabled>
-                            Contact N/A
-                          </Button>
-                        )}
+                        <Button 
+                          onClick={() => handleBookAndCallRider(ride)}
+                          className="w-full" 
+                          size="sm"
+                          disabled={!ride.contactNumber} // Disable if no contact number
+                        >
+                          Call Rider 📞
+                        </Button>
                       </CardFooter>
                     </Card>
                   ))}
@@ -526,3 +542,6 @@ export default function DashboardPage() {
 
     
 
+
+
+      
