@@ -72,7 +72,7 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 };
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, signOutUser } = useAuth(); // Use Firebase user object
+  const { user, loading: authLoading, signOutUser } = useAuth(); 
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
@@ -92,7 +92,7 @@ export default function DashboardPage() {
     if (user) {
       fetchRides();
     }
-  }, [user, authLoading, router]); // Removed fetchRides from dependency array
+  }, [user, authLoading]); // Removed router, fetchRides from dependency array
 
   const fetchRides = async () => {
     setIsLoadingRides(true);
@@ -105,7 +105,6 @@ export default function DashboardPage() {
         return { 
           id: docSnapshot.id, 
           ...data,
-          // Ensure createdAt is properly cast if needed, but usually spread works if types match
           createdAt: data.createdAt as Timestamp 
         } as Ride;
       });
@@ -146,8 +145,7 @@ export default function DashboardPage() {
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
   const handleBookAndCallRider = async (rideToBook: Ride) => {
-    setIsLoadingRides(true); // Indicate processing
-    // 1. Save to localStorage ("Your Rides")
+    setIsLoadingRides(true); 
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
@@ -170,17 +168,13 @@ export default function DashboardPage() {
       return; 
     }
 
-    // 2. Delete from Firestore
     try {
       const rideRef = doc(db, "rides", rideToBook.id);
       await deleteDoc(rideRef);
       console.log(`Ride ${rideToBook.id} deleted from Firestore.`);
 
-      // 3. Update local UI list
       setAllRidesFromDB(prevRides => prevRides.filter(r => r.id !== rideToBook.id));
-      // setFilteredRides will update automatically due to allRidesFromDB change in useEffect
-
-      // 4. Show success toast
+      
       toast({
         title: (
           <div className="flex items-center">
@@ -192,7 +186,6 @@ export default function DashboardPage() {
         variant: "default",
       });
 
-      // 5. Programmatically open dialer if contact number exists
       if (rideToBook.contactNumber) {
         window.location.href = `tel:${rideToBook.contactNumber}`;
       }
@@ -241,9 +234,7 @@ export default function DashboardPage() {
     }
   };
 
-  // AuthContext's global loading screen handles the initial check.
-  // This component's specific loader is for its own data fetching.
-  if (authLoading) { // Still wait for auth to be fully resolved before rendering dashboard attempts
+  if (authLoading) { 
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -255,10 +246,8 @@ export default function DashboardPage() {
     );
   }
 
-  // If not authLoading and no user, AuthProvider should have redirected.
-  // This is a fallback or for when user state changes after initial load.
   if (!user) {
-    // AuthProvider should redirect to /signin. This just prevents rendering dashboard content prematurely.
+    // AuthProvider should redirect to /signin or /about-us based on its logic
     return null; 
   }
 

@@ -11,9 +11,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'; 
 
 export default function AboutUsPage() {
-  const { user, loading: authLoading } = useAuth(); // Use Firebase user object
+  const { user, loading: authLoading } = useAuth(); // Firebase user object
   const router = useRouter();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // Renamed from isSigningIn
 
   const handleGotItClick = async () => {
     setIsProcessing(true);
@@ -28,7 +28,7 @@ export default function AboutUsPage() {
     // setIsProcessing(false); // Navigation will occur
   };
   
-  // Public page, but "Got it" button behavior depends on auth state.
+  // This page is public, "Got it" button behavior depends on auth state.
   // AuthProvider handles redirection for truly protected routes.
 
   return (

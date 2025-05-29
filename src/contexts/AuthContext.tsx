@@ -9,29 +9,28 @@ import {
   Auth, 
   User, 
   onAuthStateChanged, 
-  signOut, 
-  RecaptchaVerifier, 
-  signInWithPhoneNumber,
-  ConfirmationResult
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase'; // Assuming auth is exported from your firebase setup
+import { auth } from '@/lib/firebase'; 
 import { FirebaseError } from 'firebase/app';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  setupRecaptcha: (containerId: string) => RecaptchaVerifier | null;
-  sendOtpToPhoneNumber: (phoneNumber: string, appVerifier: RecaptchaVerifier) => Promise<void>;
-  confirmOtp: (otp: string) => Promise<void>;
+  signInOrUpWithPhoneNumber: (rawPhoneNumber: string) => Promise<void>;
   signOutUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const DUMMY_PASSWORD = "dummyPassword123!"; // Store securely in a real app, but for prototype this is fine.
+const DUMMY_DOMAIN = "@phone.app";
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
@@ -51,104 +50,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!user) { // Not logged in
         if (!isPublicPage && !isSignInPage) {
-          router.push('/signin'); // Redirect to sign-in if trying to access protected page
+          router.push('/signin'); 
         }
       } else { // Logged in
         if (isSignInPage) {
-          router.push('/about-us'); // If logged in and on signin page, go to about-us
+          router.push('/about-us'); 
         }
       }
     }
   }, [user, loading, pathname, router]);
 
-  const setupRecaptcha = (containerId: string): RecaptchaVerifier | null => {
+  const signInOrUpWithPhoneNumber = async (rawPhoneNumber: string) => {
+    setLoading(true);
+    const fullPhoneNumber = `+91${rawPhoneNumber}`;
+    const emailForAuth = `${fullPhoneNumber}${DUMMY_DOMAIN}`;
+
     try {
-      // Ensure window.recaptchaVerifier is only created once or reset if needed.
-      // For invisible reCAPTCHA, it's often best to create it just before signInWithPhoneNumber.
-      if ((window as any).recaptchaVerifier && typeof (window as any).recaptchaVerifier.clear === 'function') {
-        (window as any).recaptchaVerifier.clear(); // Clear previous instance if any
-      }
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-        'size': 'invisible', // Can also be 'normal' for a visible widget
-        'callback': (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-          // This callback is more for visible reCAPTCHA. For invisible, it resolves automatically.
-          console.log("reCAPTCHA solved:", response);
-        },
-        'expired-callback': () => {
-          // Response expired. Ask user to solve reCAPTCHA again.
-          toast({ title: "reCAPTCHA Expired", description: "Please try sending the OTP again.", variant: "destructive" });
-        }
-      });
-      return (window as any).recaptchaVerifier;
+      // Try to sign in first
+      await signInWithEmailAndPassword(auth, emailForAuth, DUMMY_PASSWORD);
+      toast({ title: "Welcome Back!", description: "Signed in successfully." });
+      // onAuthStateChanged will handle user state and redirection
     } catch (error) {
-        console.error("Error setting up RecaptchaVerifier: ", error);
-        let message = "Could not initialize reCAPTCHA. Please refresh and try again.";
+      if (error instanceof FirebaseError && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential')) {
+        // User not found or invalid credential, try to create a new user
+        try {
+          await createUserWithEmailAndPassword(auth, emailForAuth, DUMMY_PASSWORD);
+          toast({ title: "Account Created!", description: "Successfully signed up and logged in." });
+          // onAuthStateChanged will handle user state and redirection
+        } catch (createError) {
+          console.error("Error creating user:", createError);
+          let createTitle = "Sign-Up Failed";
+          let createMessage = "Could not create your account. Please try again.";
+          if (createError instanceof FirebaseError) {
+            if (createError.code === 'auth/email-already-in-use') {
+              createMessage = "This phone number is already associated with an account. Try signing in or check the number.";
+            } else if (createError.code === 'auth/weak-password') {
+              createMessage = "The password (dummy) is too weak. This is an app issue."; // Should not happen with fixed dummy
+            } else {
+              createMessage = createError.message;
+            }
+          }
+          toast({ title: createTitle, description: createMessage, variant: "destructive" });
+        }
+      } else {
+        // Other sign-in errors
+        console.error("Error signing in:", error);
+        let title = "Sign-In Failed";
+        let message = "An unexpected error occurred during sign-in.";
         if (error instanceof FirebaseError) {
-            message = error.message;
+          message = error.message;
         }
-        toast({ title: "reCAPTCHA Error", description: message, variant: "destructive", duration: 7000 });
-        return null;
-    }
-  };
-
-  const sendOtpToPhoneNumber = async (phoneNumber: string, appVerifier: RecaptchaVerifier) => {
-    setLoading(true);
-    try {
-      const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-      setConfirmationResult(result);
-      toast({ title: "OTP Sent", description: `An OTP has been sent to ${phoneNumber}.` });
-    } catch (error) {
-      console.error("Error sending OTP:", error);
-      let title = "OTP Send Failed";
-      let message = "Could not send OTP. Please check the phone number and try again.";
-      if (error instanceof FirebaseError) {
-        message = error.message; // Firebase provides descriptive error messages
-         if (error.code === 'auth/invalid-phone-number') {
-          message = "The phone number format is invalid.";
-        } else if (error.code === 'auth/too-many-requests') {
-          message = "Too many requests. Please try again later.";
-        } else if (error.code === 'auth/captcha-check-failed') {
-            message = "reCAPTCHA verification failed. Please ensure it's set up correctly and try again.";
-        }
+        toast({ title, description: message, variant: "destructive" });
       }
-      toast({ title, description: message, variant: "destructive", duration: 7000 });
-      // Reset reCAPTCHA verifier if it exists and has a render method, or clear it
-      if (appVerifier && typeof appVerifier.clear === 'function') {
-        appVerifier.clear();
-      }
-      throw error; // Re-throw to allow UI to handle (e.g., stop processing spinner)
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const confirmOtp = async (otp: string) => {
-    if (!confirmationResult) {
-      toast({ title: "Verification Error", description: "No OTP verification process found. Please send OTP first.", variant: "destructive" });
-      return;
-    }
-    setLoading(true);
-    try {
-      await confirmationResult.confirm(otp);
-      // User is now signed in. onAuthStateChanged will handle the user state update and redirection.
-      toast({ title: "Verification Successful!", description: "You are now signed in." });
-      // No need to set user here, onAuthStateChanged will do it.
-      // Redirection will be handled by the useEffect.
-    } catch (error) {
-      console.error("Error confirming OTP:", error);
-      let title = "OTP Verification Failed";
-      let message = "The OTP entered is incorrect or has expired. Please try again.";
-       if (error instanceof FirebaseError) {
-        message = error.message; // Firebase provides descriptive error messages
-        if (error.code === 'auth/invalid-verification-code') {
-          message = "Invalid OTP. Please check and try again.";
-        } else if (error.code === 'auth/code-expired') {
-          message = "The OTP has expired. Please request a new one.";
-        }
-      }
-      toast({ title, description: message, variant: "destructive" });
-      throw error; // Re-throw to allow UI to handle
     } finally {
       setLoading(false);
     }
@@ -158,9 +111,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signOut(auth);
-      setUser(null); // Explicitly set user to null
-      setConfirmationResult(null); // Clear confirmation result
-      router.push('/signin'); // Redirect to sign-in page after sign out
+      // setUser(null); // onAuthStateChanged will handle this
+      router.push('/signin'); 
     } catch (error) {
       console.error("Error signing out: ", error);
       toast({
@@ -172,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     }
   };
-
+  
   if (loading && (pathname !== '/about-us' && pathname !== '/terms-and-conditions' && pathname !== '/signin')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
@@ -186,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, setupRecaptcha, sendOtpToPhoneNumber, confirmOtp, signOutUser }}>
+    <AuthContext.Provider value={{ user, loading, signInOrUpWithPhoneNumber, signOutUser }}>
       {children}
     </AuthContext.Provider>
   );
