@@ -201,8 +201,6 @@ export default function DashboardPage() {
         description: "Could not remove the ride from available listings. Please try again.",
         variant: "destructive",
       });
-      // Optional: If Firestore deletion fails, you might want to revert the localStorage change.
-      // This adds complexity, so for a prototype, it might be acceptable to leave it as is.
     }
   };
   
@@ -466,6 +464,10 @@ export default function DashboardPage() {
                         <div className="flex items-center">
                           <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">To:</span>&nbsp;{ride.destination}
+                        </div>
+                        <div className="flex items-center">
+                          <Users className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">Capacity:</span>&nbsp;{ride.seatingCapacity}
                         </div>
                         {ride.contactNumber && (
                           <div className="flex items-center">

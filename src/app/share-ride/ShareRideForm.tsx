@@ -255,7 +255,7 @@ export function ShareRideForm() {
                 <FormItem>
                   <FormLabel>Seating Capacity (including driver)</FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" placeholder="e.g. 2" {...field} 
+                    <Input type="number" min="0" placeholder="e.g. 2" {...field} 
                       onChange={event => field.onChange(+event.target.value)} 
                       disabled={isSubmitting}
                     />
