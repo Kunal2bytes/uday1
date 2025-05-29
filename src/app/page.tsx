@@ -26,7 +26,7 @@ import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, where, Timestamp } from "firebase/firestore"; // Timestamp imported
+import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore"; // Timestamp imported
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -62,32 +62,40 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 };
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, signOutUser } = useAuth();
+  const { userEmail, loading: authLoading, signOutUser } = useAuth(); // Using userEmail
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
   const [destinationSearch, setDestinationSearch] = useState("");
-  const [allRidesFromDB, setAllRidesFromDB] = useState<Ride[]>([]); // Use Ride type
-  const [filteredRides, setFilteredRides] = useState<Ride[]>([]);   // Use Ride type
+  const [allRidesFromDB, setAllRidesFromDB] = useState<Ride[]>([]);
+  const [filteredRides, setFilteredRides] = useState<Ride[]>([]);
   const [isLoadingRides, setIsLoadingRides] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !userEmail) {
       router.push('/about-us');
     }
-  }, [user, authLoading, router]);
+  }, [userEmail, authLoading, router]);
 
   useEffect(() => {
-    if (user) {
+    if (userEmail) { // Check if userEmail exists
       const fetchRides = async () => {
         setIsLoadingRides(true);
         try {
           const ridesCollectionRef = collection(db, "rides");
           const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
           const querySnapshot = await getDocs(q);
-          const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride)); // Cast to Ride
+          const ridesData = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return { 
+              id: doc.id, 
+              ...data,
+              createdAt: data.createdAt as Timestamp // Ensure createdAt is typed as Timestamp
+            } as Ride;
+          });
           setAllRidesFromDB(ridesData);
+          setFilteredRides(ridesData); // Initially show all rides or apply search if terms exist
         } catch (error) {
           console.error("Error fetching rides from Firestore: ", error);
           toast({
@@ -104,14 +112,14 @@ export default function DashboardPage() {
       setFilteredRides([]);
       setIsLoadingRides(false);
     }
-  }, [user, toast]);
+  }, [userEmail, toast]); // Depend on userEmail
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
     const lowerDestination = destinationSearch.toLowerCase().trim();
 
     if (!lowerOrigin && !lowerDestination) {
-      setFilteredRides([]);
+      setFilteredRides([]); // Show no rides if search bars are empty
       return;
     }
 
@@ -171,7 +179,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading || (!authLoading && !user)) {
+  if (authLoading || (!authLoading && !userEmail)) {
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -227,7 +235,7 @@ export default function DashboardPage() {
                     onClick={handleShareApp}
                   >
                     <Share2 className="mr-2 h-5 w-5" />
-                    Share this App
+                    Share
                   </Button>
                   <Button
                     variant="ghost"
@@ -289,7 +297,13 @@ export default function DashboardPage() {
             <section aria-labelledby="available-rides-header" className="space-y-4">
               <h2 id="available-rides-header" className="text-xl font-semibold text-muted-foreground mb-4">Available Shared Rides</h2>
               {isLoadingRides ? (
-                <p className="text-center text-muted-foreground py-6">Loading rides...</p>
+                <div className="text-center py-10">
+                  <svg className="animate-spin h-8 w-8 text-primary mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-muted-foreground">Loading rides...</p>
+                </div>
               ) : filteredRides.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
                   {filteredRides.map((ride) => (
