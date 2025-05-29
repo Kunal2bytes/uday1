@@ -72,7 +72,7 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 };
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, signOutUser } = useAuth(); 
+  const { userEmail, loading: authLoading, signOutUser } = useAuth(); 
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
@@ -83,13 +83,15 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/about-us');
+    // AuthProvider handles redirection for unauthenticated users
+    if (authLoading) return; // Wait for auth state to be determined
+    if (!userEmail && !authLoading) { // If still no userEmail after loading, redirect
+        router.push('/about-us');
     }
-  }, [user, authLoading, router]);
+  }, [userEmail, authLoading, router]);
 
   useEffect(() => {
-    if (user) { 
+    if (userEmail) { // Only fetch rides if user is "signed in"
       const fetchRides = async () => {
         setIsLoadingRides(true);
         try {
@@ -101,7 +103,7 @@ export default function DashboardPage() {
             return { 
               id: doc.id, 
               ...data,
-              createdAt: data.createdAt as Timestamp // Ensure createdAt is typed as Timestamp
+              createdAt: data.createdAt as Timestamp 
             } as Ride;
           });
           setAllRidesFromDB(ridesData);
@@ -110,7 +112,7 @@ export default function DashboardPage() {
           console.error("Error fetching rides from Firestore: ", error);
           toast({
             title: "Error Fetching Rides",
-            description: "Could not load rides from the database. Please try again later.",
+            description: "Could not load rides. Please check your connection or try again later.",
             variant: "destructive",
           });
         }
@@ -122,7 +124,7 @@ export default function DashboardPage() {
       setFilteredRides([]);
       setIsLoadingRides(false);
     }
-  }, [user, toast]); 
+  }, [userEmail, toast]); 
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
@@ -210,7 +212,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading || (!authLoading && !user)) {
+  if (authLoading || (!authLoading && !userEmail)) {
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -331,6 +333,12 @@ export default function DashboardPage() {
                           <h4 className="font-semibold text-md text-foreground mb-1">Booking Rickshaws:</h4>
                           <p className="text-muted-foreground">
                             If you need a rickshaw for shorter distances, you can also book one through the app from the available options.
+                          </p>
+                        </div>
+                        <div className="pt-2">
+                          <h4 className="font-semibold text-md text-foreground mb-1">Contact Us:</h4>
+                          <p className="text-muted-foreground">
+                            For more information email us at <a href="mailto:hopsupport@gmail.com" className="text-primary hover:underline">hopsupport@gmail.com</a>.
                           </p>
                         </div>
                       </div>
@@ -489,6 +497,8 @@ export default function DashboardPage() {
     </div>
   );
 }
+    
+
     
 
     
