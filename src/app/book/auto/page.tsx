@@ -6,12 +6,12 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, CarTaxiFront as AutoIcon, Phone } from "lucide-react";
+import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, CarTaxiFront as AutoIcon, Phone, CheckCircle } from "lucide-react";
 import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy, Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, Timestamp, doc, deleteDoc } from "firebase/firestore";
 
 const PageVehicleIcon = AutoIcon;
 const pageTitle = "Available Autos";
@@ -29,7 +29,7 @@ export default function BookAutoPage() {
         const ridesRef = collection(db, "rides");
         const q = query(ridesRef, where("vehicle", "==", vehicleType), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
-        const ridesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ride));
+        const ridesData = querySnapshot.docs.map(docSnapshot => ({ id: docSnapshot.id, ...docSnapshot.data() } as Ride));
         setAutoRides(ridesData);
       } catch (error) {
         console.error("Error fetching auto rides:", error);
@@ -45,30 +45,51 @@ export default function BookAutoPage() {
     return `${capacity - 1}`;
   };
 
-  const handleBookRide = (ride: Ride) => {
-    toast({
-      title: "Auto Ride Request Sent!",
-      description: `Your request for an auto ride with ${ride.name} has been notionally sent.`,
-      variant: "default",
-    });
-    console.log(`Booking auto ride with ${ride.name} (ID: ${ride.id}) - Check browser console for this message.`);
-
+  const handleBookRide = async (rideToBook: Ride) => {
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
-      const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === ride.id);
+      const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === rideToBook.id);
       if (!isRideAlreadyBooked) {
-        bookedRides.push(ride);
+        bookedRides.push(rideToBook);
         localStorage.setItem('bookedRides', JSON.stringify(bookedRides));
         console.log("Ride saved to Your Rides (localStorage).");
       } else {
-        console.log("Ride already in Your Rides.");
+        console.log("Ride already in Your Rides (localStorage).");
       }
     } catch (e) {
       console.error("Failed to save ride to localStorage:", e);
       toast({
         title: "Error Saving Ride",
         description: "Could not save this ride to 'Your Rides'.",
+        variant: "destructive",
+      });
+      return; 
+    }
+
+    try {
+      const rideRef = doc(db, "rides", rideToBook.id);
+      await deleteDoc(rideRef);
+      console.log(`Ride ${rideToBook.id} deleted from Firestore.`);
+
+      setAutoRides(prevRides => prevRides.filter(r => r.id !== rideToBook.id));
+
+      toast({
+        title: (
+          <div className="flex items-center">
+            <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+            <span>Your ride booked.</span>
+          </div>
+        ),
+        description: "Go to the menu page and check the 'Your Rides' section.",
+        variant: "default",
+      });
+
+    } catch (error) {
+      console.error(`Error deleting ${vehicleType} ride from Firestore:`, error);
+      toast({
+        title: "Booking Error",
+        description: `Could not remove the ${vehicleType} ride from available listings. Please try again.`,
         variant: "destructive",
       });
     }

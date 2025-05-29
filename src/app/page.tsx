@@ -4,7 +4,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone, LogOut, HelpCircle } from "lucide-react";
+import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone, LogOut, HelpCircle, CheckCircle } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -36,8 +36,8 @@ import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore"; // Keep Timestamp
-import { useAuth } from "@/contexts/AuthContext"; // Updated AuthContext
+import { collection, getDocs, query, orderBy, Timestamp, doc, deleteDoc } from "firebase/firestore";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; label: string; onClick?: () => void; href?: string }) => {
@@ -83,10 +83,9 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // AuthProvider handles redirection for unauthenticated users
     if (authLoading) return; 
     if (!userPhoneNumber && !authLoading) { 
-        router.push('/signin'); // Or /about-us depending on desired flow for unauth dashboard access
+        router.push('/about-us');
     }
   }, [userPhoneNumber, authLoading, router]);
 
@@ -98,16 +97,16 @@ export default function DashboardPage() {
           const ridesCollectionRef = collection(db, "rides");
           const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
           const querySnapshot = await getDocs(q);
-          const ridesData = querySnapshot.docs.map(doc => {
-            const data = doc.data();
+          const ridesData = querySnapshot.docs.map(docSnapshot => { // Renamed doc to docSnapshot
+            const data = docSnapshot.data();
             return { 
-              id: doc.id, 
+              id: docSnapshot.id, 
               ...data,
               createdAt: data.createdAt as Timestamp 
             } as Ride;
           });
           setAllRidesFromDB(ridesData);
-          setFilteredRides(ridesData); 
+          // setFilteredRides(ridesData); // Filtering now happens in another useEffect
         } catch (error) {
           console.error("Error fetching rides from Firestore: ", error);
           toast({
@@ -150,31 +149,52 @@ export default function DashboardPage() {
 
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
-  const handleBookRide = (ride: Ride) => {
-    toast({
-      title: "Ride Request Sent!",
-      description: `Your request for a ride with ${ride.name} has been notionally sent.`,
-      variant: "default",
-    });
-    console.log(`Booking ride with ${ride.name} (ID: ${ride.id}) - Check browser console for this message.`);
-
+  const handleBookRide = async (rideToBook: Ride) => {
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
-      
-      const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === ride.id);
+      const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === rideToBook.id);
       if (!isRideAlreadyBooked) {
-        bookedRides.push(ride);
+        bookedRides.push(rideToBook);
         localStorage.setItem('bookedRides', JSON.stringify(bookedRides));
         console.log("Ride saved to Your Rides (localStorage).");
       } else {
-        console.log("Ride already in Your Rides.");
+        console.log("Ride already in Your Rides (localStorage).");
       }
     } catch (e) {
       console.error("Failed to save ride to localStorage:", e);
       toast({
         title: "Error Saving Ride",
-        description: "Could not save this ride to 'Your Rides'. LocalStorage might be full or disabled.",
+        description: "Could not save this ride to 'Your Rides'.",
+        variant: "destructive",
+      });
+      return; 
+    }
+
+    try {
+      const rideRef = doc(db, "rides", rideToBook.id);
+      await deleteDoc(rideRef);
+      console.log(`Ride ${rideToBook.id} deleted from Firestore.`);
+
+      setAllRidesFromDB(prevRides => prevRides.filter(r => r.id !== rideToBook.id));
+      // This will indirectly update filteredRides via the useEffect that depends on allRidesFromDB
+
+      toast({
+        title: (
+          <div className="flex items-center">
+            <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+            <span>Your ride booked.</span>
+          </div>
+        ),
+        description: "Go to the menu page and check the 'Your Rides' section.",
+        variant: "default",
+      });
+
+    } catch (error) {
+      console.error("Error deleting ride from Firestore:", error);
+      toast({
+        title: "Booking Error",
+        description: "Could not remove the ride from available listings. Please try again.",
         variant: "destructive",
       });
     }
@@ -502,3 +522,4 @@ export default function DashboardPage() {
     
 
     
+
