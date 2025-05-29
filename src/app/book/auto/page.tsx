@@ -11,7 +11,7 @@ import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy, Timestamp } from "firebase/firestore"; // Ensure Timestamp is imported
+import { collection, getDocs, query, where, orderBy, Timestamp } from "firebase/firestore";
 
 const PageVehicleIcon = AutoIcon;
 const pageTitle = "Available Autos";
@@ -52,6 +52,26 @@ export default function BookAutoPage() {
       variant: "default",
     });
     console.log(`Booking auto ride with ${ride.name} (ID: ${ride.id}) - Check browser console for this message.`);
+
+    try {
+      const existingBookedRidesString = localStorage.getItem('bookedRides');
+      let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
+      const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === ride.id);
+      if (!isRideAlreadyBooked) {
+        bookedRides.push(ride);
+        localStorage.setItem('bookedRides', JSON.stringify(bookedRides));
+        console.log("Ride saved to Your Rides (localStorage).");
+      } else {
+        console.log("Ride already in Your Rides.");
+      }
+    } catch (e) {
+      console.error("Failed to save ride to localStorage:", e);
+      toast({
+        title: "Error Saving Ride",
+        description: "Could not save this ride to 'Your Rides'.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -136,3 +156,6 @@ export default function BookAutoPage() {
     </div>
   );
 }
+
+
+    
