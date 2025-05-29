@@ -174,7 +174,7 @@ export function ShareRideForm() {
                 name="origin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Origin</FormLabel>
+                    <FormLabel>From</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. Central Park" {...field} disabled={isSubmitting}/>
                     </FormControl>
@@ -187,7 +187,7 @@ export function ShareRideForm() {
                 name="destination"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Destination</FormLabel>
+                    <FormLabel>To</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. Times Square" {...field} disabled={isSubmitting}/>
                     </FormControl>

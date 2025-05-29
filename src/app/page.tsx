@@ -4,7 +4,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone, LogOut } from "lucide-react";
+import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone, LogOut, HelpCircle } from "lucide-react";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -14,6 +14,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -91,7 +101,7 @@ export default function DashboardPage() {
             return { 
               id: doc.id, 
               ...data,
-              createdAt: data.createdAt as Timestamp 
+              createdAt: data.createdAt as Timestamp // Ensure createdAt is typed as Timestamp
             } as Ride;
           });
           setAllRidesFromDB(ridesData);
@@ -150,7 +160,6 @@ export default function DashboardPage() {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
       
-      // Optional: Check if ride already exists to prevent duplicates based on ID
       const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === ride.id);
       if (!isRideAlreadyBooked) {
         bookedRides.push(ride);
@@ -265,6 +274,75 @@ export default function DashboardPage() {
                     <Share2 className="mr-2 h-5 w-5" />
                     Share
                   </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-base py-3 px-4 hover:bg-accent hover:text-accent-foreground rounded-md flex items-center"
+                      >
+                        <HelpCircle className="mr-2 h-5 w-5" />
+                        Help
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[525px] max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="text-2xl text-primary flex items-center">
+                          <HelpCircle className="mr-2 h-6 w-6" /> Help & Support
+                        </DialogTitle>
+                        <DialogDescription className="text-base text-muted-foreground pt-2">
+                          Here's some information to help you use the HOPE app.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4 space-y-4 text-sm">
+                        <p className="font-semibold text-lg text-foreground">Hello HOPE users,</p>
+                        
+                        <div>
+                          <h4 className="font-semibold text-md text-foreground mb-1">Sharing Your Ride:</h4>
+                          <p className="text-muted-foreground">
+                            Whenever you want to share a ride, you can click on 'Share Your Ride'. 
+                            After entering the required information, you can easily share your ride details with others.
+                          </p>
+                        </div>
+
+                        <div>
+                          <h4 className="font-semibold text-md text-foreground mb-1">Finding a Ride:</h4>
+                          <p className="text-muted-foreground">
+                            If you need a ride, enter your current location in the 'FROM' field and your destination in the 'TO' field on the dashboard. 
+                            You will then see available rides matching your search criteria.
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-md text-foreground mb-1">Contacting Users & Responsibility:</h4>
+                          <p className="text-muted-foreground">
+                            You can contact ride sharers through the app. However, please be aware that if you engage in any inappropriate, abusive, or "useless" communication after contacting, 
+                            legal action may be taken against you. HOPE and its team are not responsible for user interactions or their consequences. Travel safely and respectfully.
+                          </p>
+                        </div>
+
+                        <div>
+                          <h4 className="font-semibold text-md text-foreground mb-1">Bus Routes:</h4>
+                          <p className="text-muted-foreground">
+                            Using our HOPE app, you can also find bus schedules and routes. This feature will help you determine which bus to take and its estimated arrival times at various stops.
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-md text-foreground mb-1">Booking Rickshaws:</h4>
+                          <p className="text-muted-foreground">
+                            If you need a rickshaw for shorter distances, you can also book one through the app from the available options.
+                          </p>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button type="button" variant="outline">
+                            Close
+                          </Button>
+                        </DialogClose>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                   <Button
                     variant="ghost"
                     className="w-full justify-start text-base py-3 px-4 text-destructive hover:bg-destructive/80 hover:text-destructive-foreground rounded-md flex items-center"
@@ -297,7 +375,7 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label htmlFor="origin-search" className="text-sm font-medium text-muted-foreground">Origin</label>
+                <label htmlFor="origin-search" className="text-sm font-medium text-muted-foreground">From</label>
                 <Input
                   id="origin-search"
                   type="text"
@@ -308,7 +386,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label htmlFor="destination-search" className="text-sm font-medium text-muted-foreground">Destination</label>
+                <label htmlFor="destination-search" className="text-sm font-medium text-muted-foreground">TO</label>
                 <Input
                   id="destination-search"
                   type="text"
