@@ -62,7 +62,7 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 };
 
 export default function DashboardPage() {
-  const { userEmail, loading: authLoading, signOutUser } = useAuth(); // Using userEmail
+  const { user, loading: authLoading, signOutUser } = useAuth(); 
   const router = useRouter();
 
   const [originSearch, setOriginSearch] = useState("");
@@ -73,13 +73,13 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!authLoading && !userEmail) {
+    if (!authLoading && !user) {
       router.push('/about-us');
     }
-  }, [userEmail, authLoading, router]);
+  }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (userEmail) { // Check if userEmail exists
+    if (user) { 
       const fetchRides = async () => {
         setIsLoadingRides(true);
         try {
@@ -91,11 +91,11 @@ export default function DashboardPage() {
             return { 
               id: doc.id, 
               ...data,
-              createdAt: data.createdAt as Timestamp // Ensure createdAt is typed as Timestamp
+              createdAt: data.createdAt as Timestamp 
             } as Ride;
           });
           setAllRidesFromDB(ridesData);
-          setFilteredRides(ridesData); // Initially show all rides or apply search if terms exist
+          setFilteredRides(ridesData); 
         } catch (error) {
           console.error("Error fetching rides from Firestore: ", error);
           toast({
@@ -112,14 +112,14 @@ export default function DashboardPage() {
       setFilteredRides([]);
       setIsLoadingRides(false);
     }
-  }, [userEmail, toast]); // Depend on userEmail
+  }, [user, toast]); 
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
     const lowerDestination = destinationSearch.toLowerCase().trim();
 
     if (!lowerOrigin && !lowerDestination) {
-      setFilteredRides([]); // Show no rides if search bars are empty
+      setFilteredRides([]); 
       return;
     }
 
@@ -179,7 +179,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading || (!authLoading && !userEmail)) {
+  if (authLoading || (!authLoading && !user)) {
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                   </Button>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-base py-3 px-4 hover:bg-destructive/80 hover:text-destructive-foreground rounded-md flex items-center text-destructive"
+                    className="w-full justify-start text-base py-3 px-4 text-destructive hover:bg-destructive/80 hover:text-destructive-foreground rounded-md flex items-center"
                     onClick={signOutUser}
                   >
                     <LogOut className="mr-2 h-5 w-5" />
@@ -383,3 +383,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
