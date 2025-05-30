@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, type Timestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 export default function BusSchedulesPage() {
@@ -103,6 +103,14 @@ export default function BusSchedulesPage() {
     setDisplayRoutes(filtered);
   }, [selectedState, selectedDistrict, cityQuery, allRoutesFromDB]);
 
+  const handleCityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    if (value.length > 0) {
+      value = value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    setCityQuery(value);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center p-4 sm:p-6">
       <div className="w-full max-w-3xl">
@@ -163,7 +171,7 @@ export default function BusSchedulesPage() {
                   id="city-input"
                   placeholder="Enter City or Village"
                   value={cityQuery}
-                  onChange={(e) => setCityQuery(e.target.value)}
+                  onChange={handleCityInputChange}
                 />
               </div>
             </div>
@@ -239,3 +247,4 @@ export default function BusSchedulesPage() {
     </div>
   );
 }
+
