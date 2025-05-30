@@ -123,7 +123,8 @@ export default function BusSchedulesPage() {
   };
 
   const handleDeleteRoute = async (routeId: string) => {
-    const enteredKey = window.prompt("To delete this route, please enter the deletion key:");
+    const promptMessage = "Enter deletion key to proceed:\nOnly users with the correct key can delete this route.\nHint: The default key is uk_hope001.";
+    const enteredKey = window.prompt(promptMessage);
 
     if (enteredKey === null) { // User pressed Cancel or closed the prompt
       toast({
@@ -170,10 +171,10 @@ export default function BusSchedulesPage() {
         title: (
             <div className="flex items-center">
               <XCircle className="mr-2 h-5 w-5 text-destructive" />
-              <span>Authorization Failed</span>
+              <span>Invalid key!</span>
             </div>
         ),
-        description: "Invalid key. You are not authorized to delete this data.",
+        description: "You are not authorized to delete this route.",
         variant: "destructive",
       });
     }
