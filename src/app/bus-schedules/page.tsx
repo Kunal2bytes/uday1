@@ -122,6 +122,7 @@ export default function BusSchedulesPage() {
     setCityQuery(value);
   };
 
+  // The handleDeleteRoute function remains, but it won't be called from the UI anymore.
   const handleDeleteRoute = async (routeId: string) => {
     const promptMessage = "Enter deletion key to proceed:\nOnly users with the correct key can delete this route.\nHint: The default key is uk_hope001.";
     const enteredKey = window.prompt(promptMessage);
@@ -193,7 +194,7 @@ export default function BusSchedulesPage() {
           </Link>
           <div className="flex items-center justify-center sm:justify-start mb-2">
             <ListChecks className="h-8 w-8 text-primary mr-3" />
-            <h1 className="text-3xl font-bold text-center sm:text-left text-primary">Bus Schedules & Routes</h1>
+            <h1 className="text-3xl font-bold text-center sm:text-left text-primary">Bus Schedules &amp; Routes</h1>
           </div>
           <p className="text-muted-foreground text-center sm:text-left">
             Filter by location to find bus routes shared by conductors/drivers.
@@ -276,7 +277,7 @@ export default function BusSchedulesPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm flex-grow">
-                  <h4 className="font-semibold text-base text-muted-foreground">Stops & Schedule:</h4>
+                  <h4 className="font-semibold text-base text-muted-foreground">Stops &amp; Schedule:</h4>
                   {route.stops.length > 0 ? (
                     <ul className="space-y-2 pl-1">
                       {route.stops.map((stop, index) => (
@@ -296,17 +297,9 @@ export default function BusSchedulesPage() {
                     <p className="text-muted-foreground">No stops listed for this route.</p>
                   )}
                 </CardContent>
-                <CardFooter className="flex justify-between items-center pt-3">
-                  <p className="text-xs text-muted-foreground/80">Route ID: {route.id}</p>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteRoute(route.id)}
-                    className="flex items-center"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </Button>
+                <CardFooter className="flex justify-end items-center pt-3">
+                  <p className="text-xs text-muted-foreground/80 mr-auto">Route ID: {route.id}</p>
+                  {/* Delete button removed from here */}
                 </CardFooter>
               </Card>
             ))}
