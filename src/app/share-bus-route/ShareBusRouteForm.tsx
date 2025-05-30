@@ -82,10 +82,6 @@ export function ShareBusRouteForm() {
         variant: "default",
       });
       form.reset();
-      // Ensure at least one stop field is present after reset
-      // Check if fields is empty after reset, and if so, append one.
-      // form.reset() might not immediately update `fields` length from useFieldArray
-      // So, directly ensure `stops` in defaultValues or explicitly append.
       if (form.getValues("stops").length === 0) {
         append({ stopName: "", scheduledTime: "" });
       }
@@ -118,7 +114,17 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>State</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. California" {...field} disabled={isSubmitting} />
+                      <Input 
+                        placeholder="e.g. California" 
+                        {...field} 
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          if (value.length > 0) {
+                            value = value.charAt(0).toUpperCase() + value.slice(1);
+                          }
+                          field.onChange(value);
+                        }}
+                        disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -131,7 +137,17 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>District</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Los Angeles County" {...field} disabled={isSubmitting} />
+                      <Input 
+                        placeholder="e.g. Los Angeles County" 
+                        {...field} 
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          if (value.length > 0) {
+                            value = value.charAt(0).toUpperCase() + value.slice(1);
+                          }
+                          field.onChange(value);
+                        }}
+                        disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -144,7 +160,17 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>City</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Los Angeles" {...field} disabled={isSubmitting} />
+                      <Input 
+                        placeholder="e.g. Los Angeles" 
+                        {...field} 
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          if (value.length > 0) {
+                            value = value.charAt(0).toUpperCase() + value.slice(1);
+                          }
+                          field.onChange(value);
+                        }}
+                        disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,7 +186,17 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>Route Name or Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Route 101, Downtown Express" {...field} disabled={isSubmitting} />
+                      <Input 
+                        placeholder="e.g. Route 101, Downtown Express" 
+                        {...field} 
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          if (value.length > 0) {
+                            value = value.charAt(0).toUpperCase() + value.slice(1);
+                          }
+                          field.onChange(value);
+                        }}
+                        disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -173,7 +209,17 @@ export function ShareBusRouteForm() {
                   <FormItem>
                     <FormLabel>Bus Number (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. B-789, V-1234" {...field} disabled={isSubmitting} />
+                      <Input 
+                        placeholder="e.g. B-789, V-1234" 
+                        {...field} 
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          if (value.length > 0) {
+                            value = value.charAt(0).toUpperCase() + value.slice(1);
+                          }
+                          field.onChange(value);
+                        }}
+                        disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -195,7 +241,17 @@ export function ShareBusRouteForm() {
                         <FormItem>
                           <FormLabel>Stop Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Main Street & 1st Ave" {...field} disabled={isSubmitting} />
+                            <Input 
+                              placeholder="e.g. Main Street & 1st Ave" 
+                              {...field} 
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                if (value.length > 0) {
+                                  value = value.charAt(0).toUpperCase() + value.slice(1);
+                                }
+                                field.onChange(value);
+                              }}
+                              disabled={isSubmitting} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

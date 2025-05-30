@@ -210,7 +210,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (authLoading) return; 
     if (!user && !authLoading) { 
-        router.push('/about-us'); // Ensure unauth users go through about-us
+        router.push('/about-us'); 
         return;
     }
     if (user) {
@@ -529,7 +529,13 @@ export default function DashboardPage() {
                   type="text"
                   placeholder={t.originPlaceholder}
                   value={originSearch}
-                  onChange={(e) => setOriginSearch(e.target.value)}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    if (value.length > 0) {
+                      value = value.charAt(0).toUpperCase() + value.slice(1);
+                    }
+                    setOriginSearch(value);
+                  }}
                   className="bg-input border-border placeholder:text-muted-foreground text-foreground rounded-lg"
                 />
               </div>
@@ -540,7 +546,13 @@ export default function DashboardPage() {
                   type="text"
                   placeholder={t.destinationPlaceholder}
                   value={destinationSearch}
-                  onChange={(e) => setDestinationSearch(e.target.value)}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    if (value.length > 0) {
+                      value = value.charAt(0).toUpperCase() + value.slice(1);
+                    }
+                    setDestinationSearch(value);
+                  }}
                   className="bg-input border-border placeholder:text-muted-foreground text-foreground rounded-lg"
                 />
               </div>

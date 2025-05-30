@@ -159,7 +159,17 @@ export function ShareRideForm() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Uday Jatale" {...field} disabled={isSubmitting}/>
+                    <Input 
+                      placeholder="e.g. Uday Jatale" 
+                      {...field} 
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        if (value.length > 0) {
+                          value = value.charAt(0).toUpperCase() + value.slice(1);
+                        }
+                        field.onChange(value);
+                      }}
+                      disabled={isSubmitting}/>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -186,7 +196,17 @@ export function ShareRideForm() {
                   <FormItem>
                     <FormLabel>From</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Central Park" {...field} disabled={isSubmitting}/>
+                      <Input 
+                        placeholder="e.g. Central Park" 
+                        {...field} 
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          if (value.length > 0) {
+                            value = value.charAt(0).toUpperCase() + value.slice(1);
+                          }
+                          field.onChange(value);
+                        }}
+                        disabled={isSubmitting}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -199,7 +219,17 @@ export function ShareRideForm() {
                   <FormItem>
                     <FormLabel>To</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Times Square" {...field} disabled={isSubmitting}/>
+                      <Input 
+                        placeholder="e.g. Times Square" 
+                        {...field} 
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          if (value.length > 0) {
+                            value = value.charAt(0).toUpperCase() + value.slice(1);
+                          }
+                          field.onChange(value);
+                        }}
+                        disabled={isSubmitting}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -230,8 +260,8 @@ export function ShareRideForm() {
                     <Input 
                       placeholder="ex. MH 12 DE 1234" 
                       {...field} 
-                      value={field.value || ""} // Ensure value is not undefined for input
-                      onChange={(e) => field.onChange(e.target.value.toUpperCase())} // Convert to uppercase on change
+                      value={field.value || ""} 
+                      onChange={(e) => field.onChange(e.target.value.toUpperCase())} 
                       disabled={isSubmitting}
                     />
                   </FormControl>
@@ -349,4 +379,3 @@ export function ShareRideForm() {
     </Card>
   );
 }
-
