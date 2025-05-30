@@ -5,8 +5,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ChevronLeft, MapPin, Clock, ListChecks, BusFront, Search } from "lucide-react";
-import type { BusRoute } from '@/lib/mockData'; // BusRoute interface will be used
+import { ChevronLeft, MapPin, Clock, ListChecks, BusFront, Search, Trash2, CheckCircle, XCircle } from "lucide-react";
+import type { BusRoute } from '@/lib/mockData'; 
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +18,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, type Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, type Timestamp, doc, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
+const DELETION_KEY = "uk_hope001";
 
 export default function BusSchedulesPage() {
   const [allRoutesFromDB, setAllRoutesFromDB] = useState<BusRoute[]>([]);
@@ -41,9 +54,16 @@ export default function BusSchedulesPage() {
       setIsLoading(true);
       try {
         const routesRef = collection(db, "busRoutes");
-        const q = query(routesRef, orderBy("createdAt", "desc")); // Order by most recent
+        const q = query(routesRef, orderBy("createdAt", "desc")); 
         const querySnapshot = await getDocs(q);
-        const routesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BusRoute));
+        const routesData = querySnapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          return { 
+            id: docSnap.id, 
+            ...data,
+            createdAt: data.createdAt as Timestamp // Ensure createdAt is correctly typed
+          } as BusRoute;
+        });
         setAllRoutesFromDB(routesData);
       } catch (error) {
         console.error("Error fetching bus routes from Firestore:", error);
@@ -110,6 +130,59 @@ export default function BusSchedulesPage() {
     }
     setCityQuery(value);
   };
+
+  const handleDeleteRoute = async (routeId: string) => {
+    const enteredKey = window.prompt("To delete this route, please enter the deletion key:");
+
+    if (enteredKey === null) {
+      toast({
+        title: "Deletion Cancelled",
+        description: "The deletion process was cancelled.",
+        variant: "default",
+      });
+      return;
+    }
+
+    if (enteredKey === DELETION_KEY) {
+      try {
+        const routeRef = doc(db, "busRoutes", routeId);
+        await deleteDoc(routeRef);
+        
+        setAllRoutesFromDB(prevRoutes => prevRoutes.filter(route => route.id !== routeId));
+        // The displayRoutes will update automatically due to the useEffect dependency on allRoutesFromDB
+
+        toast({
+          title: (
+            <div className="flex items-center">
+              <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+              <span>Bus Route Deleted</span>
+            </div>
+          ),
+          description: "The bus route has been successfully deleted.",
+          variant: "default",
+        });
+      } catch (error) {
+        console.error("Error deleting bus route from Firestore:", error);
+        toast({
+          title: "Deletion Failed",
+          description: "Could not delete the bus route. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      toast({
+        title: (
+            <div className="flex items-center">
+              <XCircle className="mr-2 h-5 w-5 text-destructive" />
+              <span>Authorization Failed</span>
+            </div>
+        ),
+        description: "Invalid key. You are not authorized to delete this data.",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground items-center p-4 sm:p-6">
@@ -226,8 +299,17 @@ export default function BusSchedulesPage() {
                     <p className="text-muted-foreground">No stops listed for this route.</p>
                   )}
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex justify-between items-center pt-3">
                   <p className="text-xs text-muted-foreground/80">Route ID: {route.id}</p>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteRoute(route.id)}
+                    className="flex items-center"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
                 </CardFooter>
               </Card>
             ))}
@@ -247,4 +329,3 @@ export default function BusSchedulesPage() {
     </div>
   );
 }
-
