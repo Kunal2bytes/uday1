@@ -224,7 +224,7 @@ export default function BusSchedulesPage() {
               </Card>
             ))}
           </div>
-        ) : ( // Covers all other cases: (isLoading=false AND filtersApplied AND displayRoutes.length === 0) OR (isLoading=false AND allRoutesFromDB.length === 0)
+        ) : ( 
           <div className="text-center py-10 bg-card rounded-lg shadow">
             <Search className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-muted-foreground">
