@@ -20,17 +20,6 @@ import {
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, type Timestamp, doc, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 
 const DELETION_KEY = "uk_hope001";
 
@@ -116,8 +105,9 @@ export default function BusSchedulesPage() {
       filtered = filtered.filter(route => route.district === selectedDistrict);
     }
     if (cityQuery.trim()) {
+      const lowerCityQuery = cityQuery.trim().toLowerCase();
       filtered = filtered.filter(route =>
-        route.city.toLowerCase().includes(cityQuery.trim().toLowerCase())
+        route.city.toLowerCase().includes(lowerCityQuery)
       );
     }
     setDisplayRoutes(filtered);
@@ -126,6 +116,7 @@ export default function BusSchedulesPage() {
   const handleCityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
     if (value.length > 0) {
+      // Capitalize first letter, rest as typed
       value = value.charAt(0).toUpperCase() + value.slice(1);
     }
     setCityQuery(value);
@@ -134,9 +125,14 @@ export default function BusSchedulesPage() {
   const handleDeleteRoute = async (routeId: string) => {
     const enteredKey = window.prompt("To delete this route, please enter the deletion key:");
 
-    if (enteredKey === null) {
+    if (enteredKey === null) { // User pressed Cancel or closed the prompt
       toast({
-        title: "Deletion Cancelled",
+        title: (
+          <div className="flex items-center">
+            <XCircle className="mr-2 h-5 w-5 text-muted-foreground" />
+            <span>Deletion Cancelled</span>
+          </div>
+        ),
         description: "The deletion process was cancelled.",
         variant: "default",
       });
@@ -318,10 +314,10 @@ export default function BusSchedulesPage() {
           <div className="text-center py-10 bg-card rounded-lg shadow">
             <Search className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-muted-foreground">
-              {allRoutesFromDB.length === 0 && !filtersApplied ? "No bus routes have been shared yet." : "No bus schedules found matching your criteria."}
+              {allRoutesFromDB.length === 0 && !isLoading && !filtersApplied ? "No bus routes have been shared yet." : "No bus schedules found matching your criteria."}
             </p>
             <p className="text-sm text-muted-foreground">
-              {allRoutesFromDB.length === 0 && !filtersApplied ? "Be the first to share a route!" : "Try adjusting your filters or ask a conductor to share a route for this area."}
+              {allRoutesFromDB.length === 0 && !isLoading && !filtersApplied ? "Be the first to share a route!" : "Try adjusting your filters or ask a conductor to share a route for this area."}
             </p>
           </div>
         )}
@@ -329,3 +325,4 @@ export default function BusSchedulesPage() {
     </div>
   );
 }
+
