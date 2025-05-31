@@ -160,7 +160,7 @@ export function ShareRideForm() {
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g. Priya Sharma" 
+                      placeholder="Enter your name" 
                       {...field} 
                       onChange={(e) => {
                         let value = e.target.value;
@@ -379,3 +379,4 @@ export function ShareRideForm() {
     </Card>
   );
 }
+
