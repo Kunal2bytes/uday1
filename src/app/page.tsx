@@ -64,7 +64,7 @@ const translations = {
     vehicleLabel: "Vehicle",
     genderLabel: "Gender",
     timeLabel: "Time",
-    capacityLabel: "Capacity",
+    seatingCapacityLabel: "Seating Capacity",
     contactLabel: "Contact",
     callRiderButton: "Call Rider 📞",
     offerRideTitle: "Offer Your Ride",
@@ -110,7 +110,7 @@ const translations = {
     help: "मदद",
     signOut: "साइन आउट",
     changeLanguage: "Switch to English", // अंग्रेजी में बदलें
-    appTitle: "होप", // Or keep HOPE
+    appTitle: "होप",
     findRideTitle: "सवारी खोजें",
     findRideDescription: "उपलब्ध सवारियाँ खोजने के लिए अपना मूल और गंतव्य दर्ज करें।",
     fromLabel: "यहाँ से",
@@ -123,7 +123,7 @@ const translations = {
     vehicleLabel: "वाहन",
     genderLabel: "लिंग",
     timeLabel: "समय",
-    capacityLabel: "क्षमता",
+    seatingCapacityLabel: "बैठने की क्षमता",
     contactLabel: "संपर्क",
     callRiderButton: "राइडर को कॉल करें 📞",
     offerRideTitle: "अपनी सवारी दें",
@@ -477,7 +477,7 @@ export default function DashboardPage() {
                         <div className="pt-2">
                           <h4 className="font-semibold text-md text-foreground mb-1">{t.helpContactEmail}:</h4>
                           <p className="text-muted-foreground">
-                            <a href="mailto:hopsupport@gmail.com" className="text-primary hover:underline">hopsupport@gmail.com</a>.
+                            <a href="mailto:help.hope8236@gmail.com" className="text-primary hover:underline">help.hope8236@gmail.com</a>.
                           </p>
                         </div>
                       </div>
@@ -502,7 +502,7 @@ export default function DashboardPage() {
               </SheetContent>
             </Sheet>
 
-            <h1 className="text-xl font-bold mx-auto text-foreground">{translations[language].appTitle || "HOPE"}</h1>
+            <h1 className="text-xl font-bold mx-auto text-foreground">{t.appTitle}</h1>
 
 
             <div className="flex items-center justify-end ml-2 sm:ml-0">
@@ -595,7 +595,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex items-center">
                           <Users className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{t.capacityLabel}:</span>&nbsp;{ride.seatingCapacity}
+                          <span className="font-medium">{t.seatingCapacityLabel}:</span>&nbsp;{ride.seatingCapacity}
                         </div>
                         {ride.contactNumber && (
                           <div className="flex items-center">
@@ -654,3 +654,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
