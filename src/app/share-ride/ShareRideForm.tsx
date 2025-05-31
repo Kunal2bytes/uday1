@@ -160,7 +160,7 @@ export function ShareRideForm() {
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="e.g. Uday Jatale" 
+                      placeholder="e.g. Priya Sharma" 
                       {...field} 
                       onChange={(e) => {
                         let value = e.target.value;
@@ -197,7 +197,7 @@ export function ShareRideForm() {
                     <FormLabel>From</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="e.g. Central Park" 
+                        placeholder="e.g. Shivaji Nagar" 
                         {...field} 
                         onChange={(e) => {
                           let value = e.target.value;
@@ -220,7 +220,7 @@ export function ShareRideForm() {
                     <FormLabel>To</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="e.g. Times Square" 
+                        placeholder="e.g. Kothrud Depot" 
                         {...field} 
                         onChange={(e) => {
                           let value = e.target.value;
