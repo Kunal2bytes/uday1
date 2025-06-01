@@ -649,6 +649,21 @@ export default function DashboardPage() {
               <ServiceButton icon={<ListChecks />} label={t.busSchedulesButton} href="/bus-schedules" />
             </div>
           </section>
+          
+          {/* Ad Slot */}
+          <div className="my-8 flex justify-center">
+            <amp-ad
+              width="100vw"
+              height="320"
+              type="adsense"
+              data-ad-client="ca-pub-4509937035801359"
+              data-ad-slot="1475392832"
+              data-auto-format="rspv"
+              data-full-width="">
+              <div overflow=""></div>
+            </amp-ad>
+          </div>
+
         </main>
       </div>
     </div>
