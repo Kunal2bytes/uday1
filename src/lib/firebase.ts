@@ -6,29 +6,19 @@ import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBVs8I73id-GPce_n1JEdm_S_gEAql3R30",
-  authDomain: "project-hope-a64cd.firebaseapp.com",
-  projectId: "project-hope-a64cd",
-  storageBucket: "project-hope-a64cd.firebasestorage.app",
-  messagingSenderId: "163623312354",
-  appId: "1:163623312354:web:f146884fd37aff4b3337bb",
-  measurementId: "G-HPEH29F66S"
+  apiKey: "AIzaSyCUUkaOjeGdvdyjHqtjh6Ag-lNMItSNNOk",
+  authDomain: "hope-f9012.firebaseapp.com",
+  projectId: "hope-f9012",
+  storageBucket: "hope-f9012.firebasestorage.app",
+  messagingSenderId: "519928297012",
+  appId: "1:519928297012:web:cf15cdecb3f0312980fc61",
+  measurementId: "G-ZX4E542QEM"
 };
 
 // Initialize Firebase
-let app: FirebaseApp;
-
-try {
-  console.log("Attempting to initialize Firebase with config:", firebaseConfig);
-  app = initializeApp(firebaseConfig);
-  console.log("Firebase app initialized successfully:", app.name);
-} catch (error) {
-  console.error("Critical error initializing Firebase app:", error);
-  // In a real app, you might want to display a more user-friendly error message
-  // or prevent the app from proceeding if Firebase is essential.
-  throw error; 
-}
+const app: FirebaseApp = initializeApp(firebaseConfig);
 
 let auth: Auth;
 let googleProvider: GoogleAuthProvider;
@@ -38,7 +28,6 @@ try {
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
   db = getFirestore(app);
-  console.log("Firebase Auth and Firestore services initialized.");
 } catch (error) {
   console.error("Error initializing Firebase services (Auth/Firestore):", error);
   // Handle cases where app might be initialized but services fail
