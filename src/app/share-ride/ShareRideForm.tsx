@@ -109,6 +109,7 @@ export function ShareRideForm() {
       const docRef = await addDoc(collection(db, "rides"), newRidePayload);
       console.log("Ride added to Firestore with ID: ", docRef.id);
       
+      const vehicleNameCapitalized = data.vehicle.charAt(0).toUpperCase() + data.vehicle.slice(1);
       toast({
         title: (
           <div className="flex items-center">
@@ -116,7 +117,7 @@ export function ShareRideForm() {
             <span>Ride Shared Successfully!</span>
           </div>
         ),
-        description: "Your ride is shared! You'll now be taken to the relevant booking page.",
+        description: `Your ride details have been shared. You'll now be taken to the 'Book a ${vehicleNameCapitalized}' page where your ride will be listed.`,
         variant: "default",
       });
       form.reset({ 
