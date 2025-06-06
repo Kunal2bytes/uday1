@@ -19,10 +19,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
-// import type { Ride } from "@/lib/mockData"; // Not directly used for form values
 import { db } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { CheckCircle } from "lucide-react";
+import { useRouter } from 'next/navigation'; // Added useRouter
 
 const VALID_VEHICLE_NUMBER_REGEX = /^[A-Z]{2}\s\d{2}\s[A-Z]{2}\s\d{4}$/;
 
@@ -71,6 +71,7 @@ export type ShareRideFormValues = z.infer<typeof formSchema>;
 
 export function ShareRideForm() {
   const { toast } = useToast();
+  const router = useRouter(); // Initialize router
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const form = useForm<ShareRideFormValues>({
     resolver: zodResolver(formSchema),
@@ -81,9 +82,7 @@ export function ShareRideForm() {
       destination: "",
       timeToGo: "",
       vehicleNumber: "",
-      seatingCapacity: 0, // Default to 0 or 1 as appropriate
-      // vehicle: undefined, // Let user select
-      // gender: undefined, // Let user select
+      seatingCapacity: 0,
     },
   });
 
@@ -131,6 +130,25 @@ export function ShareRideForm() {
         seatingCapacity: 0, 
         gender: undefined,
       });
+
+      // Navigate after successful submission and form reset
+      if (docRef) {
+        switch (data.vehicle) {
+          case "bike":
+            router.push('/book/bike');
+            break;
+          case "car":
+            router.push('/book/car');
+            break;
+          case "auto":
+            router.push('/book/auto');
+            break;
+          default:
+            router.push('/'); // Fallback to dashboard
+            break;
+        }
+      }
+
     } catch (error) {
       console.error("Error adding ride to Firestore: ", error);
       toast({
@@ -379,4 +397,3 @@ export function ShareRideForm() {
     </Card>
   );
 }
-
