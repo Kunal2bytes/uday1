@@ -22,7 +22,7 @@ import React from "react";
 import { db } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { CheckCircle } from "lucide-react";
-import { useRouter } from 'next/navigation'; // Added useRouter
+import { useRouter } from 'next/navigation';
 
 const VALID_VEHICLE_NUMBER_REGEX = /^[A-Z]{2}\s\d{2}\s[A-Z]{2}\s\d{4}$/;
 
@@ -71,7 +71,7 @@ export type ShareRideFormValues = z.infer<typeof formSchema>;
 
 export function ShareRideForm() {
   const { toast } = useToast();
-  const router = useRouter(); // Initialize router
+  const router = useRouter(); 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const form = useForm<ShareRideFormValues>({
     resolver: zodResolver(formSchema),
@@ -116,7 +116,7 @@ export function ShareRideForm() {
             <span>Ride Shared Successfully!</span>
           </div>
         ),
-        description: "Your ride details have been submitted and saved to the database.",
+        description: "Your ride is shared! You'll now be taken to the relevant booking page.",
         variant: "default",
       });
       form.reset({ 
@@ -131,7 +131,6 @@ export function ShareRideForm() {
         gender: undefined,
       });
 
-      // Navigate after successful submission and form reset
       if (docRef) {
         switch (data.vehicle) {
           case "bike":
@@ -144,7 +143,7 @@ export function ShareRideForm() {
             router.push('/book/auto');
             break;
           default:
-            router.push('/'); // Fallback to dashboard
+            router.push('/'); 
             break;
         }
       }
