@@ -1,0 +1,29 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Rides collection
+    match /rides/{rideId} {
+      // Anyone can read ride information (e.g., for searching/booking)
+      allow read: if true;
+      // Only authenticated users can create new rides (share a ride)
+      allow create: if request.auth != null;
+      // Only authenticated users can delete rides (e.g., when booking)
+      allow delete: if request.auth != null;
+      // Disallow updates to keep things simple for now
+      allow update: if false;
+    }
+
+    // BusRoutes collection
+    match /busRoutes/{busRouteId} {
+      // Anyone can read bus route information
+      allow read: if true;
+      // Only authenticated users can create new bus routes (share a route)
+      allow create: if request.auth != null;
+      // Disallow updates and deletes for bus routes for simplicity for now
+      allow update, delete: if false;
+    }
+  }
+}
