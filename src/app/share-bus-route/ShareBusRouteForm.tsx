@@ -21,6 +21,7 @@ import React, { useState } from "react";
 import { PlusCircle, Trash2, CheckCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { toTitleCase } from "@/lib/utils";
 
 const stopSchema = z.object({
   stopName: z.string().min(1, "Stop name is required."),
@@ -64,6 +65,14 @@ export function ShareBusRouteForm() {
 
     const newBusRoutePayload = {
       ...data,
+      // Ensure specific fields are title-cased if not already handled by input onChange
+      state: toTitleCase(data.state),
+      district: toTitleCase(data.district),
+      city: toTitleCase(data.city),
+      stops: data.stops.map(stop => ({
+        ...stop,
+        stopName: toTitleCase(stop.stopName)
+      })),
       createdAt: serverTimestamp(),
     };
 
@@ -82,9 +91,12 @@ export function ShareBusRouteForm() {
         variant: "default",
       });
       form.reset();
-      if (form.getValues("stops").length === 0) {
-        append({ stopName: "", scheduledTime: "" });
-      }
+      // Ensure fields array for stops is reset to one empty stop
+      // First remove all existing fields
+      fields.forEach((_, index) => remove(index));
+      // Then append a new default stop
+      append({ stopName: "", scheduledTime: "" });
+
     } catch (error) {
       console.error("Error adding bus route to Firestore: ", error);
       toast({
@@ -117,13 +129,7 @@ export function ShareBusRouteForm() {
                       <Input 
                         placeholder="e.g. California" 
                         {...field} 
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          if (value.length > 0) {
-                            value = value.charAt(0).toUpperCase() + value.slice(1);
-                          }
-                          field.onChange(value);
-                        }}
+                        onChange={(e) => field.onChange(toTitleCase(e.target.value))}
                         disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
@@ -140,13 +146,7 @@ export function ShareBusRouteForm() {
                       <Input 
                         placeholder="e.g. Los Angeles County" 
                         {...field} 
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          if (value.length > 0) {
-                            value = value.charAt(0).toUpperCase() + value.slice(1);
-                          }
-                          field.onChange(value);
-                        }}
+                        onChange={(e) => field.onChange(toTitleCase(e.target.value))}
                         disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
@@ -163,13 +163,7 @@ export function ShareBusRouteForm() {
                       <Input 
                         placeholder="e.g. Los Angeles" 
                         {...field} 
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          if (value.length > 0) {
-                            value = value.charAt(0).toUpperCase() + value.slice(1);
-                          }
-                          field.onChange(value);
-                        }}
+                        onChange={(e) => field.onChange(toTitleCase(e.target.value))}
                         disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
@@ -188,14 +182,7 @@ export function ShareBusRouteForm() {
                     <FormControl>
                       <Input 
                         placeholder="e.g. Route 101, Downtown Express" 
-                        {...field} 
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          if (value.length > 0) {
-                            value = value.charAt(0).toUpperCase() + value.slice(1);
-                          }
-                          field.onChange(value);
-                        }}
+                        {...field}
                         disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
@@ -212,13 +199,6 @@ export function ShareBusRouteForm() {
                       <Input 
                         placeholder="e.g. B-789, V-1234" 
                         {...field} 
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          if (value.length > 0) {
-                            value = value.charAt(0).toUpperCase() + value.slice(1);
-                          }
-                          field.onChange(value);
-                        }}
                         disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
@@ -244,13 +224,7 @@ export function ShareBusRouteForm() {
                             <Input 
                               placeholder="e.g. Main Street & 1st Ave" 
                               {...field} 
-                              onChange={(e) => {
-                                let value = e.target.value;
-                                if (value.length > 0) {
-                                  value = value.charAt(0).toUpperCase() + value.slice(1);
-                                }
-                                field.onChange(value);
-                              }}
+                              onChange={(e) => field.onChange(toTitleCase(e.target.value))}
                               disabled={isSubmitting} />
                           </FormControl>
                           <FormMessage />

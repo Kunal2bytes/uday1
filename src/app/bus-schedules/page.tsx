@@ -65,8 +65,17 @@ export default function BusSchedulesPage() {
 
   useEffect(() => {
     if (allRoutesFromDB.length > 0) {
-      const uniqueStates = Array.from(new Set(allRoutesFromDB.map(route => route.state))).sort();
-      setStates(uniqueStates);
+      const stateDisplayMap = new Map<string, string>();
+      allRoutesFromDB.forEach(route => {
+        if (route.state) { // Ensure route.state is not undefined or null
+          const lowerCaseState = route.state.toLowerCase();
+          if (!stateDisplayMap.has(lowerCaseState)) {
+            stateDisplayMap.set(lowerCaseState, route.state); // Store the first encountered casing
+          }
+        }
+      });
+      const uniqueDisplayStates = Array.from(stateDisplayMap.values()).sort();
+      setStates(uniqueDisplayStates);
     } else {
       setStates([]);
     }
@@ -74,19 +83,23 @@ export default function BusSchedulesPage() {
 
   useEffect(() => {
     if (selectedState) {
-      const uniqueDistricts = Array.from(
-        new Set(
-          allRoutesFromDB
-            .filter(route => route.state === selectedState)
-            .map(route => route.district)
-        )
-      ).sort();
-      setDistricts(uniqueDistricts);
+      const districtDisplayMap = new Map<string, string>();
+      allRoutesFromDB
+        .filter(route => route.state === selectedState && route.district)
+        .forEach(route => {
+          const lowerCaseDistrict = route.district.toLowerCase();
+          if (!districtDisplayMap.has(lowerCaseDistrict)) {
+            districtDisplayMap.set(lowerCaseDistrict, route.district);
+          }
+        });
+      const uniqueDisplayDistricts = Array.from(districtDisplayMap.values()).sort();
+      setDistricts(uniqueDisplayDistricts);
     } else {
       setDistricts([]);
     }
     setSelectedDistrict(""); 
   }, [selectedState, allRoutesFromDB]);
+
 
   useEffect(() => {
     if (!selectedState && !selectedDistrict && !cityQuery.trim()) {
@@ -114,20 +127,15 @@ export default function BusSchedulesPage() {
   }, [selectedState, selectedDistrict, cityQuery, allRoutesFromDB]);
 
   const handleCityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    if (value.length > 0) {
-      // Capitalize first letter, rest as typed
-      value = value.charAt(0).toUpperCase() + value.slice(1);
-    }
-    setCityQuery(value);
+    // Keep city query as typed for flexible search, filtering will handle casing.
+    setCityQuery(e.target.value);
   };
 
-  // The handleDeleteRoute function remains, but it won't be called from the UI anymore.
   const handleDeleteRoute = async (routeId: string) => {
     const promptMessage = "Enter deletion key to proceed:\nOnly users with the correct key can delete this route.\nHint: The default key is uk_hope001.";
     const enteredKey = window.prompt(promptMessage);
 
-    if (enteredKey === null) { // User pressed Cancel or closed the prompt
+    if (enteredKey === null) { 
       toast({
         title: (
           <div className="flex items-center">
@@ -147,8 +155,7 @@ export default function BusSchedulesPage() {
         await deleteDoc(routeRef);
         
         setAllRoutesFromDB(prevRoutes => prevRoutes.filter(route => route.id !== routeId));
-        // The displayRoutes will update automatically due to the useEffect dependency on allRoutesFromDB
-
+        
         toast({
           title: (
             <div className="flex items-center">

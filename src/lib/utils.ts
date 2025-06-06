@@ -18,3 +18,12 @@ export function formatTimeTo12Hour(time24: string): string {
   const formattedHours = hours.toString().padStart(2, '0');
   return `${formattedHours}:${minutesStr} ${ampm}`;
 }
+
+export function toTitleCase(str: string): string {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
