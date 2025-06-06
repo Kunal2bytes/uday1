@@ -94,15 +94,15 @@ export function ShareRideForm() {
     console.log("Share ride data for Firestore:", data);
 
     const newRidePayload = {
-      name: data.fullName,
-      origin: data.origin,
-      destination: data.destination,
+      name: data.fullName.trim(),
+      origin: data.origin.trim(),
+      destination: data.destination.trim(),
       timeToGo: data.timeToGo,
       vehicle: data.vehicle,
-      vehicleNumber: data.vehicleNumber || "", // Store empty string if undefined
+      vehicleNumber: data.vehicleNumber ? data.vehicleNumber.trim() : "",
       gender: data.gender,
       seatingCapacity: data.seatingCapacity,
-      contactNumber: data.contactNumber,
+      contactNumber: data.contactNumber.trim(),
       createdAt: serverTimestamp(), 
     };
 
@@ -128,7 +128,7 @@ export function ShareRideForm() {
         timeToGo: "",
         vehicleNumber: "",
         vehicle: undefined, 
-        seatingCapacity: 0, // Reset to 0 or 1
+        seatingCapacity: 0, 
         gender: undefined,
       });
     } catch (error) {

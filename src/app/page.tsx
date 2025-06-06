@@ -231,7 +231,7 @@ export default function DashboardPage() {
       });
     }
     setIsLoadingRides(false);
-  }, [toast]); // Dependencies for useCallback: toast (setIsLoadingRides, setAllRidesFromDB are stable)
+  }, [toast]); 
 
   useEffect(() => {
     if (authLoading) return;
@@ -242,7 +242,7 @@ export default function DashboardPage() {
     if (user) {
       fetchRides();
     }
-  }, [user, authLoading, router, fetchRides]); // Added fetchRides to dependency array
+  }, [user, authLoading, router, fetchRides]); 
 
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
@@ -534,7 +534,7 @@ export default function DashboardPage() {
                     if (value.length > 0) {
                       value = value.charAt(0).toUpperCase() + value.slice(1);
                     }
-                    setOriginSearch(value);
+                    setOriginSearch(value.trim());
                   }}
                   className="bg-input border-border placeholder:text-muted-foreground text-foreground rounded-lg"
                 />
@@ -551,7 +551,7 @@ export default function DashboardPage() {
                     if (value.length > 0) {
                       value = value.charAt(0).toUpperCase() + value.slice(1);
                     }
-                    setDestinationSearch(value);
+                    setDestinationSearch(value.trim());
                   }}
                   className="bg-input border-border placeholder:text-muted-foreground text-foreground rounded-lg"
                 />
@@ -649,9 +649,10 @@ export default function DashboardPage() {
               <ServiceButton icon={<ListChecks />} label={t.busSchedulesButton} href="/bus-schedules" />
             </div>
           </section>
-
+          
         </main>
       </div>
     </div>
   );
 }
+
