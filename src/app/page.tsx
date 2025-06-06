@@ -559,6 +559,27 @@ export default function DashboardPage() {
             </div>
           </section>
 
+          {/* Ad Slot 1: After Find a Ride Section */}
+          <div className="my-6 flex justify-center">
+            <div>
+              <script
+                type="text/javascript"
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    var atOptions = {
+                      'key' : '8bf8de817c47344361c72c4776348f71',
+                      'format' : 'iframe',
+                      'height' : 50,
+                      'width' : 320,
+                      'params' : {}
+                    };
+                  `,
+                }}
+              />
+              <script type="text/javascript" src="//www.highperformanceformat.com/8bf8de817c47344361c72c4776348f71/invoke.js" />
+            </div>
+          </div>
+
           {showRidesList && (
             <section aria-labelledby="available-rides-header" className="space-y-4">
               <h2 id="available-rides-header" className="text-xl font-semibold text-muted-foreground mb-4">{t.availableRidesTitle}</h2>
@@ -643,6 +664,27 @@ export default function DashboardPage() {
             </div>
           </section>
 
+          {/* Ad Slot 2: Before Bus Information Section */}
+          <div className="my-6 flex justify-center">
+            <div>
+              <script
+                type="text/javascript"
+                dangerouslySetInnerHTML={{
+                  __html: `
+                    var atOptions = {
+                      'key' : '8bf8de817c47344361c72c4776348f71',
+                      'format' : 'iframe',
+                      'height' : 50,
+                      'width' : 320,
+                      'params' : {}
+                    };
+                  `,
+                }}
+              />
+              <script type="text/javascript" src="//www.highperformanceformat.com/8bf8de817c47344361c72c4776348f71/invoke.js" />
+            </div>
+          </div>
+          
           <section aria-labelledby="bus-info-header">
             <h2 id="bus-info-header" className="text-lg font-semibold text-muted-foreground mb-4">{t.busInfoTitle}</h2>
             <div className="space-y-3">
@@ -650,7 +692,7 @@ export default function DashboardPage() {
             </div>
           </section>
           
-          {/* Ad Slot */}
+          {/* Existing AdSense Ad Slot */}
           <div className="my-8 flex justify-center">
             <amp-ad
               width="100vw"
