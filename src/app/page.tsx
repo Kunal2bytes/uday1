@@ -5,7 +5,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Menu, MapPin, Share2, Bus, Bike, Car, CarTaxiFront, ListChecks, User, Clock, Route, Users, Search, PersonStanding, Phone, LogOut, HelpCircle, CheckCircle, Languages } from "lucide-react";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import Link from 'next/link';
 import {
   Sheet,
@@ -32,7 +32,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Ride } from '@/lib/mockData'; 
+import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
@@ -194,7 +194,7 @@ const ServiceButton = ({ icon, label, onClick, href }: { icon: React.ReactNode; 
 };
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, signOutUser } = useAuth(); 
+  const { user, loading: authLoading, signOutUser } = useAuth();
   const router = useRouter();
   const { language, toggleLanguage } = useLanguage();
   const t = translations[language];
@@ -207,29 +207,18 @@ export default function DashboardPage() {
   const [isLoadingRides, setIsLoadingRides] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (authLoading) return; 
-    if (!user && !authLoading) { 
-        router.push('/about-us'); 
-        return;
-    }
-    if (user) {
-      fetchRides();
-    }
-  }, [user, authLoading, router]);
-
-  const fetchRides = async () => {
+  const fetchRides = useCallback(async () => {
     setIsLoadingRides(true);
     try {
       const ridesCollectionRef = collection(db, "rides");
       const q = query(ridesCollectionRef, orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
-      const ridesData = querySnapshot.docs.map(docSnapshot => { 
+      const ridesData = querySnapshot.docs.map(docSnapshot => {
         const data = docSnapshot.data();
-        return { 
-          id: docSnapshot.id, 
+        return {
+          id: docSnapshot.id,
           ...data,
-          createdAt: data.createdAt as Timestamp 
+          createdAt: data.createdAt as Timestamp
         } as Ride;
       });
       setAllRidesFromDB(ridesData);
@@ -242,14 +231,25 @@ export default function DashboardPage() {
       });
     }
     setIsLoadingRides(false);
-  };
-  
+  }, [toast]); // Dependencies for useCallback: toast (setIsLoadingRides, setAllRidesFromDB are stable)
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user && !authLoading) {
+        router.push('/about-us');
+        return;
+    }
+    if (user) {
+      fetchRides();
+    }
+  }, [user, authLoading, router, fetchRides]); // Added fetchRides to dependency array
+
   useEffect(() => {
     const lowerOrigin = originSearch.toLowerCase().trim();
     const lowerDestination = destinationSearch.toLowerCase().trim();
 
     if (!lowerOrigin && !lowerDestination) {
-      setFilteredRides([]); 
+      setFilteredRides([]);
       return;
     }
 
@@ -269,13 +269,13 @@ export default function DashboardPage() {
   const showRidesList = originSearch.trim() !== "" || destinationSearch.trim() !== "";
 
   const handleBookAndCallRider = async (rideToBook: Ride) => {
-    setIsLoadingRides(true); 
+    setIsLoadingRides(true);
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
       const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === rideToBook.id);
       if (!isRideAlreadyBooked) {
-        bookedRides.push(rideToBook); 
+        bookedRides.push(rideToBook);
         localStorage.setItem('bookedRides', JSON.stringify(bookedRides));
       }
     } catch (e) {
@@ -286,14 +286,14 @@ export default function DashboardPage() {
         variant: "destructive",
       });
       setIsLoadingRides(false);
-      return; 
+      return;
     }
 
     try {
       const rideRef = doc(db, "rides", rideToBook.id);
       await deleteDoc(rideRef);
       setAllRidesFromDB(prevRides => prevRides.filter(r => r.id !== rideToBook.id));
-      
+
       toast({
         title: (
           <div className="flex items-center">
@@ -320,7 +320,7 @@ export default function DashboardPage() {
         setIsLoadingRides(false);
     }
   };
-  
+
   const handleShareApp = async () => {
     if (navigator.share) {
       try {
@@ -351,7 +351,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading) { 
+  if (authLoading) {
     return (
        <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <svg className="animate-spin h-10 w-10 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -364,7 +364,7 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    return null; 
+    return null;
   }
 
 
@@ -449,7 +449,7 @@ export default function DashboardPage() {
                       </DialogHeader>
                       <div className="py-4 space-y-4 text-sm">
                         <p className="font-semibold text-lg text-foreground">{t.helpGreeting}</p>
-                        
+
                         <div>
                           <h4 className="font-semibold text-md text-foreground mb-1">{t.helpShareRide}</h4>
                           <p className="text-muted-foreground">{t.helpShareRideDesc}</p>
@@ -459,7 +459,7 @@ export default function DashboardPage() {
                           <h4 className="font-semibold text-md text-foreground mb-1">{t.helpFindRide}</h4>
                           <p className="text-muted-foreground">{t.helpFindRideDesc}</p>
                         </div>
-                        
+
                         <div>
                           <h4 className="font-semibold text-md text-foreground mb-1">{t.helpContactResponsibility}</h4>
                           <p className="text-muted-foreground">{t.helpContactResponsibilityDesc}</p>
@@ -469,7 +469,7 @@ export default function DashboardPage() {
                           <h4 className="font-semibold text-md text-foreground mb-1">{t.helpBusRoutes}</h4>
                           <p className="text-muted-foreground">{t.helpBusRoutesDesc}</p>
                         </div>
-                        
+
                         <div>
                           <h4 className="font-semibold text-md text-foreground mb-1">{t.helpBookingRickshaws}</h4>
                           <p className="text-muted-foreground">{t.helpBookingRickshawsDesc}</p>
@@ -608,11 +608,11 @@ export default function DashboardPage() {
                         )}
                       </CardContent>
                       <CardFooter className="pt-3">
-                        <Button 
+                        <Button
                           onClick={() => handleBookAndCallRider(ride)}
-                          className="w-full" 
+                          className="w-full"
                           size="sm"
-                          disabled={isLoadingRides || !ride.contactNumber} 
+                          disabled={isLoadingRides || !ride.contactNumber}
                         >
                           {t.callRiderButton}
                         </Button>
@@ -642,18 +642,16 @@ export default function DashboardPage() {
               <ServiceButton icon={<CarTaxiFront />} label={t.bookAutoButton} href="/book/auto" />
             </div>
           </section>
-          
+
           <section aria-labelledby="bus-info-header">
             <h2 id="bus-info-header" className="text-lg font-semibold text-muted-foreground mb-4">{t.busInfoTitle}</h2>
             <div className="space-y-3">
               <ServiceButton icon={<ListChecks />} label={t.busSchedulesButton} href="/bus-schedules" />
             </div>
           </section>
-          
+
         </main>
       </div>
     </div>
   );
 }
-
-    
