@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ChevronLeft, MapPin, Clock, ListChecks, BusFront, Search, Trash2, CheckCircle, XCircle } from "lucide-react";
-import type { BusRoute } from '@/lib/mockData'; 
+import type { BusRoute } from '@/lib/mockData';
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,12 +43,12 @@ export default function BusSchedulesPage() {
       setIsLoading(true);
       try {
         const routesRef = collection(db, "busRoutes");
-        const q = query(routesRef, orderBy("createdAt", "desc")); 
+        const q = query(routesRef, orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         const routesData = querySnapshot.docs.map(docSnap => {
           const data = docSnap.data();
-          return { 
-            id: docSnap.id, 
+          return {
+            id: docSnap.id,
             ...data,
             createdAt: data.createdAt as Timestamp // Ensure createdAt is correctly typed
           } as BusRoute;
@@ -67,14 +67,14 @@ export default function BusSchedulesPage() {
     if (allRoutesFromDB.length > 0) {
       const stateDisplayMap = new Map<string, string>();
       allRoutesFromDB.forEach(route => {
-        if (route.state) { // Ensure route.state is not undefined or null
+        if (route.state) {
           const lowerCaseState = route.state.toLowerCase();
           if (!stateDisplayMap.has(lowerCaseState)) {
             stateDisplayMap.set(lowerCaseState, route.state); // Store the first encountered casing
           }
         }
       });
-      const uniqueDisplayStates = Array.from(stateDisplayMap.values()).sort();
+      const uniqueDisplayStates = Array.from(stateDisplayMap.values()).sort((a, b) => a.localeCompare(b));
       setStates(uniqueDisplayStates);
     } else {
       setStates([]);
@@ -83,18 +83,23 @@ export default function BusSchedulesPage() {
 
   useEffect(() => {
     if (selectedState) {
-      const uniqueDistricts = new Set<string>();
+      const districtDisplayMap = new Map<string, string>();
       allRoutesFromDB
-        .filter(route => route.state === selectedState && route.district)
+        .filter(route => route.state === selectedState && route.district) // Relies on selectedState having original casing
         .forEach(route => {
- uniqueDistricts.add(route.district);
+          if (route.district) {
+            const lowerCaseDistrict = route.district.toLowerCase();
+            if (!districtDisplayMap.has(lowerCaseDistrict)) {
+              districtDisplayMap.set(lowerCaseDistrict, route.district); // Store original casing
+            }
+          }
         });
-      const uniqueDisplayDistricts = Array.from(uniqueDistricts).sort();
+      const uniqueDisplayDistricts = Array.from(districtDisplayMap.values()).sort((a, b) => a.localeCompare(b));
       setDistricts(uniqueDisplayDistricts);
     } else {
       setDistricts([]);
     }
- setSelectedDistrict("");
+    setSelectedDistrict(""); // Reset district when state changes
   }, [selectedState, allRoutesFromDB]);
 
 
@@ -124,7 +129,6 @@ export default function BusSchedulesPage() {
   }, [selectedState, selectedDistrict, cityQuery, allRoutesFromDB]);
 
   const handleCityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Keep city query as typed for flexible search, filtering will handle casing.
     setCityQuery(e.target.value);
   };
 
@@ -252,7 +256,7 @@ export default function BusSchedulesPage() {
               </Card>
             ))}
           </div>
-        ) : ( 
+        ) : (
           <div className="text-center py-10 bg-card rounded-lg shadow">
             <Search className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-xl font-semibold text-muted-foreground">
