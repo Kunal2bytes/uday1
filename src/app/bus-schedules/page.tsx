@@ -83,21 +83,18 @@ export default function BusSchedulesPage() {
 
   useEffect(() => {
     if (selectedState) {
-      const districtDisplayMap = new Map<string, string>();
+      const uniqueDistricts = new Set<string>();
       allRoutesFromDB
         .filter(route => route.state === selectedState && route.district)
         .forEach(route => {
-          const lowerCaseDistrict = route.district.toLowerCase();
-          if (!districtDisplayMap.has(lowerCaseDistrict)) {
-            districtDisplayMap.set(lowerCaseDistrict, route.district);
-          }
+ uniqueDistricts.add(route.district);
         });
-      const uniqueDisplayDistricts = Array.from(districtDisplayMap.values()).sort();
+      const uniqueDisplayDistricts = Array.from(uniqueDistricts).sort();
       setDistricts(uniqueDisplayDistricts);
     } else {
       setDistricts([]);
     }
-    setSelectedDistrict(""); 
+ setSelectedDistrict("");
   }, [selectedState, allRoutesFromDB]);
 
 
@@ -131,62 +128,6 @@ export default function BusSchedulesPage() {
     setCityQuery(e.target.value);
   };
 
-  const handleDeleteRoute = async (routeId: string) => {
-    const promptMessage = "Enter deletion key to proceed:\nOnly users with the correct key can delete this route.\nHint: The default key is uk_hope001.";
-    const enteredKey = window.prompt(promptMessage);
-
-    if (enteredKey === null) { 
-      toast({
-        title: (
-          <div className="flex items-center">
-            <XCircle className="mr-2 h-5 w-5 text-muted-foreground" />
-            <span>Deletion Cancelled</span>
-          </div>
-        ),
-        description: "The deletion process was cancelled.",
-        variant: "default",
-      });
-      return;
-    }
-
-    if (enteredKey === DELETION_KEY) {
-      try {
-        const routeRef = doc(db, "busRoutes", routeId);
-        await deleteDoc(routeRef);
-        
-        setAllRoutesFromDB(prevRoutes => prevRoutes.filter(route => route.id !== routeId));
-        
-        toast({
-          title: (
-            <div className="flex items-center">
-              <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
-              <span>Bus Route Deleted</span>
-            </div>
-          ),
-          description: "The bus route has been successfully deleted.",
-          variant: "default",
-        });
-      } catch (error) {
-        console.error("Error deleting bus route from Firestore:", error);
-        toast({
-          title: "Deletion Failed",
-          description: "Could not delete the bus route. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } else {
-      toast({
-        title: (
-            <div className="flex items-center">
-              <XCircle className="mr-2 h-5 w-5 text-destructive" />
-              <span>Invalid key!</span>
-            </div>
-        ),
-        description: "You are not authorized to delete this route.",
-        variant: "destructive",
-      });
-    }
-  };
 
 
   return (

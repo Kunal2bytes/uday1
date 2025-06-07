@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, CarTaxiFront as AutoIcon, Phone, CheckCircle } from "lucide-react";
+import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, CarTaxiFront as AutoIcon, Phone, CheckCircle, Info } from "lucide-react";
 import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
@@ -130,6 +130,7 @@ export default function BookAutoPage() {
                   </CardTitle>
                   <CardDescription className="text-xs">
                     Vehicle: {ride.vehicle} | Driver's Gender: {ride.gender}
+                    {ride.vehicleNumber && ` | Number: ${ride.vehicleNumber}`}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm flex-grow">
@@ -173,17 +174,15 @@ export default function BookAutoPage() {
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground py-6">
-            No {vehicleType} rides found.
-          </p>
+           <div className="text-center py-10 bg-card rounded-lg shadow">
+            <PageVehicleIcon className="mx-auto h-16 w-16 text-muted-foreground mb-4 opacity-50" />
+            <p className="text-xl font-semibold text-muted-foreground">No {vehicleType} rides found.</p>
+            <p className="text-sm text-muted-foreground">
+              Check back later or share an {vehicleType} ride yourself!
+            </p>
+          </div>
         )}
       </div>
     </div>
   );
 }
-
-
-    
-
-
-    
