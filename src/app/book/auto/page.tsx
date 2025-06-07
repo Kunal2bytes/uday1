@@ -6,12 +6,12 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ChevronLeft, User, Clock, Route, MapPin, Users, PersonStanding, CarTaxiFront as AutoIcon, Phone, CheckCircle, Info } from "lucide-react";
+import { ChevronLeft, User, Clock, Route, MapPin, Users, CarTaxiFront as AutoIcon, Phone, CheckCircle } from "lucide-react";
 import type { Ride } from '@/lib/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeTo12Hour } from "@/lib/utils";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy, Timestamp, doc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, type Timestamp, doc, deleteDoc } from "firebase/firestore";
 
 const PageVehicleIcon = AutoIcon;
 const pageTitle = "Available Autos";
@@ -46,17 +46,13 @@ export default function BookAutoPage() {
   };
 
   const handleBookRide = async (rideToBook: Ride) => {
-    // 1. Save to localStorage ("Your Rides")
     try {
       const existingBookedRidesString = localStorage.getItem('bookedRides');
       let bookedRides: Ride[] = existingBookedRidesString ? JSON.parse(existingBookedRidesString) : [];
       const isRideAlreadyBooked = bookedRides.some(bookedRide => bookedRide.id === rideToBook.id);
       if (!isRideAlreadyBooked) {
-        bookedRides.push(rideToBook); // Store the full ride object
+        bookedRides.push(rideToBook);
         localStorage.setItem('bookedRides', JSON.stringify(bookedRides));
-        console.log("Ride saved to Your Rides (localStorage).");
-      } else {
-        console.log("Ride already in Your Rides (localStorage).");
       }
     } catch (e) {
       console.error("Failed to save ride to localStorage:", e);
@@ -68,16 +64,10 @@ export default function BookAutoPage() {
       return; 
     }
 
-    // 2. Delete from Firestore
     try {
       const rideRef = doc(db, "rides", rideToBook.id);
       await deleteDoc(rideRef);
-      console.log(`Ride ${rideToBook.id} deleted from Firestore.`);
-
-      // 3. Update local UI list
       setAutoRides(prevRides => prevRides.filter(r => r.id !== rideToBook.id));
-
-      // 4. Show success toast
       toast({
         title: (
           <div className="flex items-center">
@@ -88,7 +78,6 @@ export default function BookAutoPage() {
         description: "Go to the menu page and check the 'Your Rides' section.",
         variant: "default",
       });
-
     } catch (error) {
       console.error(`Error deleting ${vehicleType} ride from Firestore:`, error);
       toast({
@@ -176,9 +165,9 @@ export default function BookAutoPage() {
         ) : (
            <div className="text-center py-10 bg-card rounded-lg shadow">
             <PageVehicleIcon className="mx-auto h-16 w-16 text-muted-foreground mb-4 opacity-50" />
-            <p className="text-xl font-semibold text-muted-foreground">No {vehicleType} rides found.</p>
+            <p className="text-xl font-semibold text-muted-foreground">No {vehicleType} rides found yet.</p>
             <p className="text-sm text-muted-foreground">
-              Check back later or share an {vehicleType} ride yourself!
+             Why not be the first to share one? Or check back later!
             </p>
           </div>
         )}
